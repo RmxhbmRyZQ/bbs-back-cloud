@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="generator.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="generator.domain/po.User">
+            <id property="uid" column="uid" jdbcType="BIGINT"/>
+            <result property="id" column="id" jdbcType="INTEGER"/>
+            <result property="username" column="username" jdbcType="VARCHAR"/>
+            <result property="nickname" column="nickname" jdbcType="VARCHAR"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="emailVerified" column="email_verified" jdbcType="TINYINT"/>
+            <result property="salt" column="salt" jdbcType="VARCHAR"/>
+            <result property="registerIp" column="register_ip" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="updatedBy" column="updated_by" jdbcType="VARCHAR"/>
+            <result property="banned" column="banned" jdbcType="TINYINT"/>
+            <result property="deleted" column="deleted" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        uid,id,username,
+        nickname,password,avatar,
+        email,email_verified,salt,
+        register_ip,create_time,update_time,
+        updated_by,banned,deleted
+    </sql>
+</mapper>

@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <modules>
+        <module>auth-service</module>
+        <module>comment-service</module>
+        <module>gateway</module>
+        <module>post-service</module>
+        <module>search-service</module>
+        <module>user-service</module>
+        <module>common</module>
+        <module>sensitive-service</module>
+    </modules>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>bbs.example</groupId>
+    <artifactId>bbs-back</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>bbs-back</name>
+    <description>Demo project for Spring Boot</description>
+    <properties>
+        <java.version>17</java.version>
+        <lombok.version>1.18.30</lombok.version>
+        <mysql.version>8.3.0</mysql.version>
+        <druid.version>1.2.21</druid.version>
+        <nacos.version>2023.0.0.0</nacos.version>
+        <seata.version>1.7.1</seata.version>
+        <sentinel.version>2023.0.0.0</sentinel.version>
+        <redisson.version>3.24.3</redisson.version>
+        <elasticsearch.version>8.12.2</elasticsearch.version>
+        <mybatisplus.version>3.5.5</mybatisplus.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <mybatis-plus.version>3.5.4.1</mybatis-plus.version>
+        <hutool.version>5.8.26</hutool.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Lombok -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- Redis -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+            </dependency>
+
+            <!-- MySQL -->
+            <dependency>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <!-- Druid -->
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba</groupId>-->
+<!--                <artifactId>druid-spring-boot-starter</artifactId>-->
+<!--                <version>${druid.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- Nacos -->
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba.cloud</groupId>-->
+<!--                <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>-->
+<!--                <version>${nacos.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- Seata -->
+<!--            <dependency>-->
+<!--                <groupId>io.seata</groupId>-->
+<!--                <artifactId>seata-spring-boot-starter</artifactId>-->
+<!--                <version>${seata.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- Sentinel -->
+<!--            <dependency>-->
+<!--                <groupId>com.alibaba.cloud</groupId>-->
+<!--                <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>-->
+<!--                <version>${sentinel.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- Redisson -->
+<!--            <dependency>-->
+<!--                <groupId>org.redisson</groupId>-->
+<!--                <artifactId>redisson-spring-boot-starter</artifactId>-->
+<!--                <version>${redisson.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- Elasticsearch -->
+<!--            <dependency>-->
+<!--                <groupId>co.elastic.clients</groupId>-->
+<!--                <artifactId>elasticsearch-java</artifactId>-->
+<!--                <version>${elasticsearch.version}</version>-->
+<!--            </dependency>-->
+
+            <!-- MyBatis Plus -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatisplus.version}</version>
+            </dependency>
+
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2024.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>2022.0.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+    <dependencies>
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-oauth2-client</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-security</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-thymeleaf</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-web</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.thymeleaf.extras</groupId>-->
+<!--            <artifactId>thymeleaf-extras-springsecurity6</artifactId>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.security</groupId>-->
+<!--            <artifactId>spring-security-test</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
