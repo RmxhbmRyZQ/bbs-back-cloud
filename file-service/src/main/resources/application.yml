@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: file-service
+  cloud:
+    nacos:
+      server-addr: 192.168.3.16:8848
+      username: nacos
+      password: nacos
+    openfeign:
+      okhttp:
+        enabled: true # 开启OKHttp连接池支持
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 3MB
+      max-request-size: 100MB
+
+  data:
+    redis:
+      host: 192.168.3.16
+      port: 6379
+      password: admin123
+
+avatar:
+  remote-prefix: https://cravatar.cn/avatar/
+  remote-suffix: ?d=retro
+  prefix: 'http://localhost:8080'
+
+#关于上传的自定义属性
+upload:
+  avatarPath: "C:\\Users\\RmxhbmRyZQ\\Desktop\\find-work\\Java-project-study\\flip-master\\bbs-back\\file-service\\src\\main\\resources\\avatar\\" #头像真实存储路径
+  staticPath: "C:\\Users\\RmxhbmRyZQ\\Desktop\\find-work\\Java-project-study\\flip-master\\bbs-back\\file-service\\src\\main\\resources\\static\\" #静态文件真实存储路径
+  avatarMapperPath: "/avatar/" #头像的虚拟映射路径
+  staticMapperPath: "/static/" #静态文件的虚拟映射路径
+
+server:
+  port: 8082
+
+elasticsearch:
+  host: 192.168.3.16
+  port: 9200
+  scheme: http

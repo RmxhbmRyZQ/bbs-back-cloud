@@ -3,14 +3,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <modules>
-        <module>auth-service</module>
         <module>comment-service</module>
-        <module>gateway</module>
         <module>post-service</module>
         <module>search-service</module>
+        <module>monitor-service</module>
         <module>user-service</module>
-        <module>common</module>
-        <module>sensitive-service</module>
+        <module>bbs-common</module>
+        <module>bbs-security</module>
+        <module>bbs-api</module>
+        <module>gateway</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -26,18 +27,44 @@
     <description>Demo project for Spring Boot</description>
     <properties>
         <java.version>17</java.version>
-        <lombok.version>1.18.30</lombok.version>
-        <mysql.version>8.3.0</mysql.version>
+        <toolgood-words.version>3.1.0.0</toolgood-words.version>
+        <oshi-core.version>6.4.2</oshi-core.version>
+
+        <!-- 数据库相关 -->
+        <mysql.version>8.0.30</mysql.version>
         <druid.version>1.2.21</druid.version>
-        <nacos.version>2023.0.0.0</nacos.version>
-        <seata.version>1.7.1</seata.version>
-        <sentinel.version>2023.0.0.0</sentinel.version>
-        <redisson.version>3.24.3</redisson.version>
-        <elasticsearch.version>8.12.2</elasticsearch.version>
-        <mybatisplus.version>3.5.5</mybatisplus.version>
-        <jjwt.version>0.11.5</jjwt.version>
         <mybatis-plus.version>3.5.4.1</mybatis-plus.version>
+        <mybatisplus.version>3.5.5</mybatisplus.version>
+
+        <!-- Redis -->
+        <spring-data-redis.version>3.2.4</spring-data-redis.version> <!-- 跟随 Spring Boot -->
+        <redisson.version>3.24.3</redisson.version>
+
+        <!-- 注册中心 NACOS -->
+        <spring-cloud-alibaba.version>2022.0.0.0</spring-cloud-alibaba.version>
+        <nacos-client.version>2.1.2</nacos-client.version>
+
+        <!-- 服务限流 Sentinel -->
+        <sentinel.version>1.8.6</sentinel.version>
+
+        <!-- 分布式事务 Seata -->
+        <seata.version>1.7.1</seata.version>
+
+        <!-- 消息队列 RabbitMQ -->
+        <spring-amqp.version>3.0.11</spring-amqp.version> <!-- 跟随 Spring Boot -->
+        <rabbitmq-client.version>5.20.0</rabbitmq-client.version>
+
+        <!-- Elasticsearch -->
+        <elasticsearch.version>8.11.3</elasticsearch.version>
+
+        <!-- 其他通用依赖 -->
+        <lombok.version>1.18.30</lombok.version>
         <hutool.version>5.8.26</hutool.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
+
+        <!-- Spring Cloud (Alibaba依赖Spring Cloud版本) -->
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -51,25 +78,20 @@
                 <scope>provided</scope>
             </dependency>
 
-            <!-- Redis -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-redis</artifactId>
-            </dependency>
-
             <!-- MySQL -->
             <dependency>
-                <groupId>com.mysql</groupId>
-                <artifactId>mysql-connector-j</artifactId>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
             </dependency>
 
+
             <!-- Druid -->
-<!--            <dependency>-->
-<!--                <groupId>com.alibaba</groupId>-->
-<!--                <artifactId>druid-spring-boot-starter</artifactId>-->
-<!--                <version>${druid.version}</version>-->
-<!--            </dependency>-->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-3-starter</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
 
             <!-- Nacos -->
 <!--            <dependency>-->
@@ -79,11 +101,11 @@
 <!--            </dependency>-->
 
             <!-- Seata -->
-<!--            <dependency>-->
-<!--                <groupId>io.seata</groupId>-->
-<!--                <artifactId>seata-spring-boot-starter</artifactId>-->
-<!--                <version>${seata.version}</version>-->
-<!--            </dependency>-->
+            <dependency>
+                <groupId>io.seata</groupId>
+                <artifactId>seata-spring-boot-starter</artifactId>
+                <version>${seata.version}</version>
+            </dependency>
 
             <!-- Sentinel -->
 <!--            <dependency>-->
@@ -100,16 +122,15 @@
 <!--            </dependency>-->
 
             <!-- Elasticsearch -->
-<!--            <dependency>-->
-<!--                <groupId>co.elastic.clients</groupId>-->
-<!--                <artifactId>elasticsearch-java</artifactId>-->
-<!--                <version>${elasticsearch.version}</version>-->
-<!--            </dependency>-->
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
 
-            <!-- MyBatis Plus -->
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatisplus.version}</version>
             </dependency>
 
@@ -150,7 +171,7 @@
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-alibaba-dependencies</artifactId>
-                <version>2022.0.0.0</version>
+                <version>2023.0.1.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -165,37 +186,12 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-oauth2-client</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-security</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-thymeleaf</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-web</artifactId>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.thymeleaf.extras</groupId>-->
-<!--            <artifactId>thymeleaf-extras-springsecurity6</artifactId>-->
-<!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.security</groupId>-->
-<!--            <artifactId>spring-security-test</artifactId>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>

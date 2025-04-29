@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="generator.mapper.BannedMapper">
+<mapper namespace="com.example.user.mapper.BannedMapper">
 
-    <resultMap id="BaseResultMap" type="generator.domain/po.Banned">
+    <resultMap id="BaseResultMap" type="com.example.user.domain.po.Banned">
             <id property="id" column="id" jdbcType="INTEGER"/>
             <result property="uid" column="uid" jdbcType="BIGINT"/>
             <result property="deadline" column="deadline" jdbcType="TIMESTAMP"/>
@@ -15,4 +15,8 @@
         id,uid,deadline,
         reason
     </sql>
+    <insert id="insertBannedHistory" useGeneratedKeys="true">
+        INSERT INTO banned_history
+        VALUES (null, #{uid}, #{createTime}, #{deadline}, #{reason})
+    </insert>
 </mapper>

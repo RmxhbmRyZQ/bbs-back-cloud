@@ -31,7 +31,7 @@ services:
       - bbs-net
       
   nacos:
-    image: nacos/nacos-server:v2.1.2
+    image: nacos/nacos-server:v2.3.2
     container_name: nacos
     env_file:
       - ./nacos/custom.env
@@ -122,21 +122,22 @@ services:
 #      - es-plugins:/usr/share/elasticsearch/plugins
 #    networks:
 #      - bbs-net
-# sudo docker exec -it elasticsearch ./bin/elasticsearch-plugin  install https://get.infini.cloud/elasticsearch/analysis-ik/8.11.3
+# sudo docker exec -it elasticsearch ./bin/elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.11.3
+# sudo docker exec -it elasticsearch ./bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.11.3.zip
 
-#  kibana:
-#    image: kibana:8.11.3
-#    container_name: kibana
-#    ports:
-#      - "5601:5601"
-#    environment:
-#      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+  kibana:
+    image: kibana:8.11.3
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
 #      - ELASTICSEARCH_USERNAME=elastic
 #      - ELASTICSEARCH_PASSWORD=admin123
-#    depends_on:
-#      - elasticsearch
-#    networks:
-#      - bbs-net
+    depends_on:
+      - elasticsearch
+    networks:
+      - bbs-net
       
   rabbitmq:
     image: rabbitmq:3.12-management

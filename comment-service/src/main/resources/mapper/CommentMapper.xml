@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.example.commentservice.mapper.CommentMapper">
+<mapper namespace="com.example.comment.mapper.CommentMapper">
 
-    <resultMap id="BaseResultMap" type="com.example.commentservice.domain.po.Comment">
+    <resultMap id="BaseResultMap" type="com.example.comment.domain.po.Comment">
             <id property="id" column="id" jdbcType="INTEGER"/>
             <result property="pid" column="pid" jdbcType="BIGINT"/>
             <result property="fromUid" column="from_uid" jdbcType="BIGINT"/>
@@ -20,4 +20,29 @@
         to_uid,content,parent_id,
         reply_id,create_time
     </sql>
+
+    <select id="getComments" resultType="com.example.comment.domain.po.Comment">
+        select c.id, c.from_uid, c.content, c.create_time, u.username as fromUsername, u.nickname as fromNickname, u.avatar as fromAvatar
+        from comment as c
+                 join user as u on u.uid = c.from_uid
+        where c.pid = #{pid} and c.parent_id = 0
+        order by c.create_time;
+    </select>
+
+    <select id="getRepliesNumOfComment" resultType="Integer">
+        select count(*) as 'replies_num'
+        from comment as c
+        where c.parent_id = ${parentId};
+    </select>
+
+    <select id="getReplies" resultType="com.example.comment.domain.po.Comment">
+        select c.id, c.from_uid, c.to_uid, c.content, c.parent_id, c.reply_id, c.create_time,
+               fromUser.username as from_username, fromUser.nickname as from_nickname, fromUser.avatar as from_avatar,
+               toUser.username as to_username, toUser.nickname as to_nickname
+        from comment as c
+                 join user as fromUser on c.from_uid = fromUser.uid
+                 join user as toUser on c.to_uid = toUser.uid
+        where c.pid = ${pid} and c.parent_id = ${parentId}
+        order by c.create_time;
+    </select>
 </mapper>

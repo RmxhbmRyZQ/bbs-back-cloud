@@ -1,46 +1,63 @@
 spring:
-    application:
-        name: gateway
+  application:
+    name: gateway
 
-    cloud:
-        gateway:
-            discovery:
-                locator:
-                    enabled: true
-                    lower-case-service-id: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.3.16:8848
+        username: nacos
+        password: nacos
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
 
-            routes:
-                - id: auth-service
-                  uri: lb://auth-service
-                  predicates:
-                      - Path=/_captcha,/_checkCaptcha,/register,/login,/refresh,/activate,/_checkUsernameUnique
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/profile,/userProfile,/updateNickname,/updatePassword,/updateAvatar,/sys-ctrl/users,/sys-ctrl/banUser,/_captcha,/_checkCaptcha,/register,/login,/refresh,/activate,/_checkUsernameUnique
 
-                - id: user-service
-                  uri: lb://user-service
-                  predicates:
-                      - Path=/profile,/userProfile,/userPosts,/updateNickname,/updatePassword,/updateAvatar,/sys-ctrl/users,/sys-ctrl/banUser
+        - id: post-service
+          uri: lb://post-service
+          predicates:
+            - Path=/post/**,/postInfo,/list,/postContent,/postTitle,/tags**,/tag**,/sys-ctrl/tag**,/sys-ctrl/tagOption**,/userPosts
 
-                - id: post-service
-                  uri: lb://post-service
-                  predicates:
-                      - Path=/post/**,/postInfo,/list,/postContent,/postTitle,/tags**,/tag**,/sys-ctrl/tag**,/sys-ctrl/tagOption**
+        - id: comment-service
+          uri: lb://comment-service
+          predicates:
+            - Path=/getComments,/getReplies,/doComment,/doReply
 
-                - id: comment-service
-                  uri: lb://comment-service
-                  predicates:
-                      - Path=/getComments,/getReplies,/doComment,/doReply
+        - id: search-service
+          uri: lb://search-service
+          predicates:
+            - Path=/search/**
 
-                - id: search-service
-                  uri: lb://search-service
-                  predicates:
-                      - Path=/search/**
+#        - id: sensitive-service
+#          uri: lb://sensitive-service
+#          predicates:
+#            - Path=/sys-ctrl/sensitiveWord
 
-                - id: sensitive-service
-                  uri: lb://sensitive-service
-                  predicates:
-                      - Path=/sys-ctrl/sensitiveWord
+        - id: monitor-service
+          uri: lb://monitor-service
+          predicates:
+            - Path=/systemInfo,/forumInfo,/sys-ctrl/sensitiveWord
 
-                - id: monitor-service
-                  uri: lb://monitor-service
-                  predicates:
-                      - Path=/systemInfo,/forumInfo
+        - id: file-service
+          uri: lb://file-service
+          predicates:
+            - Path=/static/**,/avatar/**
+
+#关于JWT的自定义属性
+jwt:
+  token-header: Authorization
+  token-prefix: "Bearer "
+  secret: "TA61ja7A@a3yh4gz2trGtASt3hg2w47A15gtAok2@#fQEOQ1azGK"
+  accessTokenTTL: 3600000 #accessToken过期时间，单位毫秒，3600000毫秒为两小时
+  refreshTokenTTL: 604800000 #refreshToken过期时间，单位毫秒，604800000毫秒为7天
+  auto-refresh-ttl: 120000 #凭证剩余时间小于该值时自动刷新，单位毫秒，1200000为二十分钟
+
+server:
+  port: 8080

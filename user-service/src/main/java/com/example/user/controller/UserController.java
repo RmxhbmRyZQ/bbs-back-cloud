@@ -1,0 +1,166 @@
+package com.example.user.controller;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.example.api.client.FileClient;
+import com.example.common.domain.bo.UserBO;
+import com.example.common.domain.dto.UserDTO;
+import com.example.common.utils.RedisKeyUtils;
+import com.example.common.utils.elastic.ElasticUserUtils;
+import com.example.user.domain.po.User;
+import com.example.user.service.UserService;
+import com.example.user.utils.UserBeanUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.common.response.Response;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+public class UserController {
+    private final UserService userService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ElasticsearchClient elasticsearchClient;
+    private final FileClient fileClient;
+
+    @GetMapping("/profile")
+    public Response<Object> getProfile() {
+        UserDTO userDTO = ((UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUserDTO();
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", userDTO.getId());
+        map.put("uid", userDTO.getUid());
+        map.put("username", userDTO.getUsername());
+        map.put("nickname", userDTO.getNickname());
+        map.put("avatar", userDTO.getAvatar());
+        map.put("email", userDTO.getEmail());
+        map.put("emailVerified", userDTO.getEmailVerified());
+        map.put("registerIp", userDTO.getRegisterIp());
+        map.put("createTime", userDTO.getCreateTime());
+        map.put("role", userDTO.getRole().getName());
+        return Response.success("获取个人信息成功", map);
+    }
+
+    @GetMapping("/userProfile")
+    public Response<UserDTO> getUserProfile(@RequestParam("username") String username) {
+        UserDTO userDTO = userService.getByUsername(username);
+        if (userDTO == null) {
+            Response.failed("没有找到该用户");
+        }
+        return Response.success("获取用户信息成功", userDTO);
+    }
+
+    @GetMapping("/userId")
+    public Response<UserDTO> getUserProfileByUid(@RequestParam("uid") String uid) {
+        UserDTO userDTO = userService.getByUid(uid);
+        if (userDTO == null) {
+            Response.failed("没有找到该用户");
+        }
+        return Response.success("获取用户信息成功", userDTO);
+    }
+
+    @GetMapping("/userCount")
+    public Response<Long> getTotalUserNumber() {
+        return Response.success("获取文章总数成功", userService.count());
+    }
+
+    @GetMapping("/updateNickname")
+    public Response<String> updateNickname(
+            @RequestParam String nickname) {
+
+        UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (Objects.equals(userBO.getUserDTO().getNickname(), nickname)) {
+            return Response.success("昵称无变化");
+        }
+
+        if (!userService.checkNicknameUnique(nickname, userBO)) {
+            return Response.failed("昵称重复不可用");
+        }
+
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("uid", userBO.getUserDTO().getUid()).set("nickname", nickname);
+        boolean updated = userService.update(updateWrapper);
+        if (updated) {
+            userBO.getUserDTO().setNickname(nickname);
+            String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(userBO.getUserDTO().getUid()));
+            redisTemplate.opsForValue().set(loggedUserKey, userBO);
+
+            try {
+                ElasticUserUtils.updateUserNicknameInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));
+            } catch (IOException e) {
+                return Response.success("昵称已变更");
+            }
+            return Response.success("昵称已变更");
+        }
+
+        return Response.failed("发生未知错误");
+    }
+
+    @PostMapping("/updatePassword")
+    public Response<String> updatePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmNewPassword) {
+
+        if (!newPassword.equals(confirmNewPassword)) return Response.failed("两次输入的密码不匹配");
+
+        UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        if (!userService.correctPassword(passwordEncoder, userBO, currentPassword)) {
+            return Response.failed("当前密码不匹配");
+        }
+
+        // 加密新密码
+        String encodeNewPassword = passwordEncoder.encode(newPassword);
+
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("uid", userBO.getUserDTO().getUid()).set("password", encodeNewPassword);
+        boolean updated = userService.update(updateWrapper);
+        if (updated) {
+            userBO.getUserDTO().setPassword(encodeNewPassword);
+            String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(userBO.getUserDTO().getUid()));
+            redisTemplate.opsForValue().set(loggedUserKey, userBO);
+            return Response.success("密码修改成功");
+        }
+        return Response.failed("发生未知错误");
+    }
+
+    @PostMapping("/updateAvatar")
+    public Response<Object> updateAvatar(@RequestParam("file") MultipartFile avatar) {
+        UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uid = String.valueOf(userBO.getUserDTO().getUid());
+        Response<String> stringResponse = fileClient.uploadAvatar(avatar, uid);
+        if (!stringResponse.getCode().equals(200)) {
+            return Response.failed("设置头像失败");
+        }
+        String totalAvatarPath = stringResponse.getData();
+
+        UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("uid", uid).set("avatar", totalAvatarPath);
+        boolean updated = userService.update(updateWrapper);
+        if (updated) {
+            userBO.getUserDTO().setAvatar(totalAvatarPath);
+            redisTemplate.opsForValue().set(RedisKeyUtils.getLoggedUserKey(uid), userBO);
+
+            try {
+                ElasticUserUtils.updateUserAvatarInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));
+            } catch (IOException e) {
+                return Response.success("更新头像成功", Map.of("newAvatar", totalAvatarPath));
+            }
+            return Response.success("更新头像成功", Map.of("newAvatar", totalAvatarPath));
+        }
+
+        return Response.failed("设置头像失败");
+    }
+}

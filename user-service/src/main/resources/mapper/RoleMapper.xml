@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="generator.mapper.RoleMapper">
+<mapper namespace="com.example.user.mapper.RoleMapper">
 
-    <resultMap id="BaseResultMap" type="generator.domain/po.Role">
+    <resultMap id="BaseResultMap" type="com.example.user.domain.po.Role">
             <id property="rid" column="rid" jdbcType="INTEGER"/>
             <result property="name" column="name" jdbcType="VARCHAR"/>
             <result property="alias" column="alias" jdbcType="VARCHAR"/>
@@ -15,4 +15,8 @@
         rid,name,alias,
         index
     </sql>
+
+    <select id="loadRoleByUid" resultType="com.example.user.domain.po.Role">
+        SELECT r.rid, r.name, r.alias, r.index FROM role r LEFT JOIN user_role ur ON r.rid = ur.rid WHERE ur.uid = #{uid}
+    </select>
 </mapper>

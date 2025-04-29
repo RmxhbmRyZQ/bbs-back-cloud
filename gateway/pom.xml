@@ -6,7 +6,6 @@
         <groupId>bbs.example</groupId>
         <artifactId>bbs-back</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <artifactId>gateway</artifactId>
     <name>gateway</name>
@@ -36,6 +35,23 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+        <!--负载均衡-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>bbs.example</groupId>
+            <artifactId>bbs-common</artifactId>
+            <version>${version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>bbs.example</groupId>
+            <artifactId>bbs-security</artifactId>
+            <version>${version}</version>
         </dependency>
 
     </dependencies>
