@@ -54,6 +54,6 @@ public class FileServiceImpl implements FileService {
             return null;
         }
 
-        return uploadProperties.getAvatarPath() + uploadProperties.getAvatarMapperPath() + uid + "/" + avatarName;
+        return avatarProperties.getPrefix() + uploadProperties.getAvatarMapperPath() + uid + "/" + avatarName;
     }
 }

@@ -1,7 +1,9 @@
 package com.example.security.filter;
 
 import cn.hutool.core.util.StrUtil;
+import com.example.api.client.UserClient;
 import com.example.common.domain.bo.UserBO;
+import com.example.common.domain.dto.UserDTO;
 import com.example.common.utils.RedisKeyUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -20,6 +22,9 @@ import java.io.IOException;
 @Component
 public class UserHeaderAuthenticationFilter extends OncePerRequestFilter {
     @Resource
+    private UserClient userClient;
+
+    @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
     @Override
@@ -33,10 +38,15 @@ public class UserHeaderAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String redisKey = RedisKeyUtils.getLoggedUserKey(userId);
-        UserBO userBO = (UserBO) redisTemplate.opsForValue().get(redisKey);
+        String redisKey = RedisKeyUtils.getKeyUserUidKey(userId);
+        Object o = redisTemplate.opsForValue().get(redisKey);
 
-        if (userBO != null) {
+        if (o == null) {
+            o = userClient.getUserProfileByUid(userId);
+        }
+
+        if (o != null && o instanceof UserDTO) {
+            UserBO userBO = new UserBO((UserDTO) o);
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userBO, null, userBO.getAuthorities());
 

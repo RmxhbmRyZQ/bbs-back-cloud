@@ -11,8 +11,10 @@ import com.example.user.domain.po.Role;
 import com.example.user.domain.po.User;
 import com.example.user.service.BannedService;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -32,6 +34,8 @@ public class UserSysController {
 
     private final ElasticsearchClient elasticsearchClient;
 
+    private final UserRedisUtils userRedisUtils;
+
     @GetMapping("/users")
     public Response<Map<String, List<User>>> getAllUser() {
         List<User> users = userService.list();  // 这里应该分页
@@ -49,6 +53,7 @@ public class UserSysController {
     }
 
     @PostMapping("/banUser")
+    @Transactional
     public Response<Object> banUser(@RequestBody Banned bannedUser) {
         boolean saved = bannedService.save(bannedUser);
         if (saved) {
@@ -56,11 +61,18 @@ public class UserSysController {
             String reason = bannedUser.getReason();
             String deadline = bannedUser.getDeadline();
             String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
             bannedService.insertBannedHistory(uid, now, deadline, reason);
 
             UpdateWrapper<User> userUpdateWrapper = new UpdateWrapper<>();
             userUpdateWrapper.eq("uid", uid).set("banned", true);
             userService.update(null, userUpdateWrapper);
+
+//            UserDTO userDTO = userService.getByUid(uid.toString());
+//            userDTO.setBanned(true);
+//            userDTO.setDeadline(deadline);
+//            redisUtils.cacheUser(userDTO);
+            userRedisUtils.deleteUserCache(uid.toString());
 
             User user = new User();
             user.setUid(uid);
@@ -84,6 +96,12 @@ public class UserSysController {
             UpdateWrapper<User> userUpdateWrapper = new UpdateWrapper<>();
             userUpdateWrapper.eq("uid", uid).set("banned", false);
             userService.update(null, userUpdateWrapper);
+
+//            UserDTO userDTO = userService.getByUid(uid);
+//            userDTO.setBanned(false);
+//            userDTO.setDeadline(null);
+//            redisUtils.cacheUser(userDTO);
+            userRedisUtils.deleteUserCache(uid.toString());
 
             User user = new User();
             user.setUid(Long.valueOf(uid));

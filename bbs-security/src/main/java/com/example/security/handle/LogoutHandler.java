@@ -21,7 +21,7 @@ public class LogoutHandler extends SecurityContextLogoutHandler {
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(userBO.getUserDTO().getUid()));
+        String loggedUserKey = RedisKeyUtils.getKeyUserUidKey(String.valueOf(userBO.getUserDTO().getUid()));
 
         redisTemplate.delete(loggedUserKey);
         SecurityContextHolder.clearContext();

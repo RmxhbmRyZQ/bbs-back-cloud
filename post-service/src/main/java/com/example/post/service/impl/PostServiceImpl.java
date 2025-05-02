@@ -4,23 +4,17 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.api.client.UserClient;
 import com.example.common.domain.dto.PostDTO;
-import com.example.common.domain.dto.TagDTO;
 import com.example.common.domain.dto.UserDTO;
-import com.example.common.response.Response;
-import com.example.common.response.ResponseCode;
 import com.example.post.domain.po.Post;
 import com.example.post.domain.po.PostTag;
-import com.example.post.domain.po.Tag;
 import com.example.post.mapper.PostTagMapper;
 import com.example.post.service.PostService;
 import com.example.post.mapper.PostMapper;
 import com.example.post.service.TagService;
 import com.example.post.utils.PostBeanUtils;
-import javafx.geometry.Pos;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -50,8 +44,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public Map<String, Object> getLatestPostList(Integer currentPage) {
         QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
-        postQueryWrapper.select("id, uid, title, create_time as createTime, priority, status, type, reply_number as replyNumber, view_number as viewNumber, last_comment_time as lastCommentTime")
-                .orderByDesc("createTime");
+        postQueryWrapper.orderByDesc("create_time");
 
         return getPostList(currentPage, postQueryWrapper);
     }
@@ -59,6 +52,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
 
 
     private Map<String, Object> getPostList(Integer currentPage, QueryWrapper<Post> postQueryWrapper) {
+        postQueryWrapper.select("id, uid, title, create_time, reply_number, view_number, last_comment_time");
         int current = ObjectUtil.isNull(currentPage) ? 1 : currentPage;
         long sizePerPage = 30L;
 
@@ -91,8 +85,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public Map<String, Object> getALlPostList(Integer page) {
         QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
-        postQueryWrapper.select("id, uid, title, create_time as createTime, priority, status, type, reply_number as replyNumber, view_number as viewNumber, last_comment_time as lastCommentTime")
-                .orderByDesc("lastCommentTime");
+        postQueryWrapper.orderByDesc("last_comment_time");
 
         return getPostList(page, postQueryWrapper);
     }
@@ -100,8 +93,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public Map<String, Object> getHotPostList(Integer page) {
         QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
-        postQueryWrapper.select("id, uid, title, create_time as createTime, priority, status, type, reply_number as replyNumber, view_number as viewNumber, last_comment_time as lastCommentTime")
-                .gt("reply_number", 0).orderByDesc("replyNumber").orderByDesc("lastCommentTime");
+        postQueryWrapper.gt("reply_number", 0).orderByDesc("reply_number").orderByDesc("last_comment_time");
 
         return getPostList(page, postQueryWrapper);
     }
@@ -116,36 +108,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public void addTagToPost(PostTag postTag) {
         postTagMapper.insert(postTag);
-    }
-
-    @Override
-    public PostDTO getPostDetail(String pid) {
-        QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
-        postQueryWrapper.eq("id", pid);
-        Post post = getOne(postQueryWrapper);
-
-        if (ObjectUtil.isNull(post)) {
-            return null;
-        }
-        PostDTO postDTO = PostBeanUtils.postDTO(post);
-
-        List<PostTag> postTags = getPostTags(pid);
-        List<TagDTO> tags = new ArrayList<>();
-        postTags.forEach(tagPost -> {
-            QueryWrapper<Tag> tagQueryWrapper = new QueryWrapper<>();
-            tagQueryWrapper.eq("label", tagPost.getTagLabel());
-            Tag tag = tagService.getOne(tagQueryWrapper);
-            tags.add(PostBeanUtils.tagDTO(tag));
-        });
-        postDTO.setTags(tags);
-
-        UserDTO userDTO = userClient.getUserProfileByUid(String.valueOf(postDTO.getUid())).getData();
-
-        postDTO.setAuthor(userDTO.getUsername());
-        postDTO.setNickname(userDTO.getNickname());
-        postDTO.setAvatar(userDTO.getAvatar());
-
-        return postDTO;
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.example.common.domain.bo;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.example.common.domain.dto.UserDTO;
+import com.example.common.utils.ConstantUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,6 +21,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserBO implements UserDetails {
+    private static final DateTimeFormatter DEADLINE_FORMATTER = DateTimeFormatter.ofPattern(ConstantUtils.DATE_FORMAT);
     private UserDTO userDTO;
 
     @Override
@@ -68,6 +72,14 @@ public class UserBO implements UserDetails {
     @Override
     @JsonIgnore
     public boolean isEnabled() {
-        return true;
+        if (!userDTO.getBanned()) return true;
+
+        LocalDateTime deadline = LocalDateTime.parse(userDTO.getDeadline(), DEADLINE_FORMATTER);
+
+        if (LocalDateTime.now().isAfter(deadline)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -6,21 +6,22 @@ import com.example.common.domain.dto.UserDTO;
 import com.example.user.domain.po.Role;
 import com.example.user.domain.po.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 
 public interface UserService extends IService<User> {
     UserDTO getByUsername(String username);
 
+    UserDTO getByUid(String uid);
+
     Role loadUserRoleByUid(String valueOf);
 
     void updateUserRole(Long uid, int rid);
 
-    Boolean checkNicknameUnique(String nickname, UserBO userBO);
+    Boolean checkNicknameUnique(String nickname);
 
-    Boolean correctPassword(BCryptPasswordEncoder passwordEncoder, UserBO userBO, String currentPassword);
-
-    UserDTO getByUid(String uid);
+    Boolean correctPassword(PasswordEncoder passwordEncoder, UserBO userBO, String currentPassword);
 
     List<String> loadRoleAuthoritiesByRid(Integer rid);
 }

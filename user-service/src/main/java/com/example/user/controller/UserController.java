@@ -5,16 +5,15 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.example.api.client.FileClient;
 import com.example.common.domain.bo.UserBO;
 import com.example.common.domain.dto.UserDTO;
-import com.example.common.utils.RedisKeyUtils;
 import com.example.common.utils.elastic.ElasticUserUtils;
 import com.example.user.domain.po.User;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.example.common.response.Response;
@@ -29,9 +28,10 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final UserRedisUtils userRedisUtils;
     private final ElasticsearchClient elasticsearchClient;
     private final FileClient fileClient;
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/profile")
     public Response<Object> getProfile() {
@@ -54,8 +54,9 @@ public class UserController {
     public Response<UserDTO> getUserProfile(@RequestParam("username") String username) {
         UserDTO userDTO = userService.getByUsername(username);
         if (userDTO == null) {
-            Response.failed("没有找到该用户");
+            return Response.failed("没有找到该用户");
         }
+        userDTO.setPassword(null);
         return Response.success("获取用户信息成功", userDTO);
     }
 
@@ -63,41 +64,42 @@ public class UserController {
     public Response<UserDTO> getUserProfileByUid(@RequestParam("uid") String uid) {
         UserDTO userDTO = userService.getByUid(uid);
         if (userDTO == null) {
-            Response.failed("没有找到该用户");
+            return Response.failed("没有找到该用户");
         }
+        userDTO.setPassword(null);
         return Response.success("获取用户信息成功", userDTO);
     }
 
     @GetMapping("/userCount")
     public Response<Long> getTotalUserNumber() {
-        return Response.success("获取文章总数成功", userService.count());
+        return Response.success("获取用户总数成功", userService.count());
     }
 
     @GetMapping("/updateNickname")
-    public Response<String> updateNickname(
-            @RequestParam String nickname) {
+    public Response<String> updateNickname(@RequestParam String nickname) {
 
-        UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserDTO userDTO = ((UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getUserDTO();
 
-        if (Objects.equals(userBO.getUserDTO().getNickname(), nickname)) {
+        if (Objects.equals(userDTO.getNickname(), nickname)) {
             return Response.success("昵称无变化");
         }
 
-        if (!userService.checkNicknameUnique(nickname, userBO)) {
+        if (!userService.checkNicknameUnique(nickname)) {
             return Response.failed("昵称重复不可用");
         }
 
         UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("uid", userBO.getUserDTO().getUid()).set("nickname", nickname);
+        updateWrapper.eq("uid", userDTO.getUid()).set("nickname", nickname);
         boolean updated = userService.update(updateWrapper);
         if (updated) {
-            userBO.getUserDTO().setNickname(nickname);
-            String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(userBO.getUserDTO().getUid()));
-            redisTemplate.opsForValue().set(loggedUserKey, userBO);
+            userDTO.setNickname(nickname);
+            userRedisUtils.deleteUserCache(userDTO.getUid().toString(), userDTO.getUsername());
+//            redisUtils.cacheUser(userDTO);
 
             try {
-                ElasticUserUtils.updateUserNicknameInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));
+                ElasticUserUtils.updateUserNicknameInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
             } catch (IOException e) {
+                e.printStackTrace();
                 return Response.success("昵称已变更");
             }
             return Response.success("昵称已变更");
@@ -115,7 +117,6 @@ public class UserController {
         if (!newPassword.equals(confirmNewPassword)) return Response.failed("两次输入的密码不匹配");
 
         UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (!userService.correctPassword(passwordEncoder, userBO, currentPassword)) {
             return Response.failed("当前密码不匹配");
@@ -129,8 +130,8 @@ public class UserController {
         boolean updated = userService.update(updateWrapper);
         if (updated) {
             userBO.getUserDTO().setPassword(encodeNewPassword);
-            String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(userBO.getUserDTO().getUid()));
-            redisTemplate.opsForValue().set(loggedUserKey, userBO);
+            userRedisUtils.deleteUserCache(userBO.getUserDTO().getUid().toString(), userBO.getUserDTO().getUsername());
+//            redisUtils.cacheUser(userBO.getUserDTO());
             return Response.success("密码修改成功");
         }
         return Response.failed("发生未知错误");
@@ -151,7 +152,8 @@ public class UserController {
         boolean updated = userService.update(updateWrapper);
         if (updated) {
             userBO.getUserDTO().setAvatar(totalAvatarPath);
-            redisTemplate.opsForValue().set(RedisKeyUtils.getLoggedUserKey(uid), userBO);
+            userRedisUtils.deleteUserCache(userBO.getUserDTO().getUid().toString(), userBO.getUserDTO().getUsername());
+//            redisUtils.cacheUser(userBO.getUserDTO());
 
             try {
                 ElasticUserUtils.updateUserAvatarInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));

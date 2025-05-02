@@ -40,29 +40,10 @@ public class SecurityConfig {
     private final NoLoginHandler noLoginHandler;
     private final NoPermissionHandler noPermissionHandler;
     private final UserHeaderAuthenticationFilter userHeaderAuthenticationFilter;
-    private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
     public RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_MODERATOR  > ROLE_USER");
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager() throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
 

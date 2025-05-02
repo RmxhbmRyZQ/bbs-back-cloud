@@ -12,6 +12,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
@@ -56,5 +57,14 @@ public class BBSTest {
         BulkResponse bulkResponse = elasticsearchClient.bulk(br -> br.index("user").operations(bulkOperations));
 
         System.out.println(!bulkResponse.errors()); //如果errors是false则代表执行过程没有错误产生，反之则有错误产生，取反后返回
+    }
+
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Test
+    public void redisTest() {
+        System.out.println(redisTemplate.opsForValue().get("123"));
+        System.out.println(redisTemplate.opsForValue().get("123") == null);
     }
 }

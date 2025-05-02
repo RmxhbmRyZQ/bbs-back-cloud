@@ -1,0 +1,19 @@
+bbs:
+  db:
+    host: mysql
+    un: root
+    pw: root
+    database: post-service
+    packet: com.example.post.domain.po
+
+  es:
+    host: elasticsearch
+
+  mq:
+    host: rabbitmq
+    un: bbs
+    pw: bbs-password
+
+  redis:
+    host: redis
+    pw: admin123

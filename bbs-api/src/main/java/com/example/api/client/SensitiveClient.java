@@ -9,6 +9,6 @@ import java.util.List;
 
 @FeignClient(value = "monitor-service", configuration = DefaultFeignConfig.class)
 public interface SensitiveClient {
-    @GetMapping("/sensitive")
+    @GetMapping("/sys-ctrl/sensitive")
     public Response<List<String>> getSensitiveWord();
 }

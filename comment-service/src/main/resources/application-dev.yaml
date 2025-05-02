@@ -1,0 +1,19 @@
+bbs:
+  db:
+    host: mysql
+    un: root
+    pw: root
+    database: comment-service
+    packet: com.example.comment.domain.po
+
+  es:
+    host: elasticsearch
+
+  mq:
+    host: rabbitmq
+    un: bbs
+    pw: bbs-password
+
+  redis:
+    host: redis
+    pw: admin123

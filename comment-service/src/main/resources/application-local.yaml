@@ -1,0 +1,19 @@
+bbs:
+  db:
+    host: 192.168.3.16
+    un: root
+    pw: root
+    database: comment-service
+    packet: com.example.comment.domain.po
+
+  es:
+    host: 192.168.3.16
+
+  mq:
+    host: 192.168.3.16
+    un: bbs
+    pw: bbs-password
+
+  redis:
+    host: 192.168.3.16
+    pw: admin123

@@ -5,13 +5,15 @@ public class RedisKeyUtils {
     private static final String SPLIT = ":";
     private static final String PREFIX_CAPTCHA = "code:captcha";
     private static final String PREFIX_ACTIVATE_EMAIL_CODE = "code:emailCode";
-    private static final String PREFIX_LOGGED_USER = "user:logged";
+//    private static final String PREFIX_LOGGED_USER = "user:logged";
     private static final String PREFIX_TAG_OPTIONS = "unit:tag:options";
     private static final String PREFIX_TAGS = "unit:tag:tags";
     private static final String PREFIX_SENSITIVE_OBJS = "unit:sensitive:objs";
     private static final String PREFIX_SENSITIVE_WORDS = "unit:sensitive:words";
     private static final String PREFIX_USER_NUMBER = "status:user:number";
     private static final String PREFIX_POST_NUMBER = "status:post:number";
+    private static final String KEY_USER_UID_KEY = "user:uid:";
+    private static final String KEY_USER_USERNAME_KEY = "user:username:";
 
     public static String getCaptchaKey(String captchaOwnerUUID) {
         return PREFIX_CAPTCHA + SPLIT + captchaOwnerUUID;
@@ -25,9 +27,9 @@ public class RedisKeyUtils {
         return PREFIX_ACTIVATE_EMAIL_CODE + SPLIT + uid + SPLIT + "times";
     }
 
-    public static String getLoggedUserKey(String uid) {
-        return PREFIX_LOGGED_USER + SPLIT + uid;
-    }
+//    public static String getLoggedUserKey(String uid) {
+//        return PREFIX_LOGGED_USER + SPLIT + uid;
+//    }
 
     public static String getTagsKey() {
         return PREFIX_TAGS;
@@ -51,5 +53,13 @@ public class RedisKeyUtils {
 
     public static String getPostNumberKey() {
         return PREFIX_POST_NUMBER;
+    }
+
+    public static String getKeyUserUidKey(String uid) {
+        return KEY_USER_UID_KEY + uid;
+    }
+
+    public static String getKeyUserUsernameKey(String username) {
+        return KEY_USER_USERNAME_KEY + username;
     }
 }

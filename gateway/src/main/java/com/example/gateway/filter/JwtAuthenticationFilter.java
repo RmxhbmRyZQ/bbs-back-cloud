@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private Mono<Void> render(int code, String msg, ServerHttpResponse response) {
         response.getHeaders().add("Content-Type", "application/json;charset=UTF-8");
 
-        String result = "{\"code\": " + code + ", \"message\": " + msg + "}";
+        String result = "{\"code\": " + code + ", \"message\": \"" + msg + "\"}";
         byte[] bytes = result.getBytes(StandardCharsets.UTF_8);
         DataBuffer buffer = response.bufferFactory().wrap(bytes);
         return response.writeWith(Mono.just(buffer));

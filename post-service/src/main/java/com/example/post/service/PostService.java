@@ -1,6 +1,5 @@
 package com.example.post.service;
 
-import com.example.common.domain.dto.PostDTO;
 import com.example.post.domain.po.Post;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.post.domain.po.PostTag;
@@ -21,8 +20,6 @@ public interface PostService extends IService<Post> {
     void deletePostTags(Long pid);
 
     void addTagToPost(PostTag postTag);
-
-    PostDTO getPostDetail(String pid);
 
     List<PostTag> getPostTags(String pid);
 }

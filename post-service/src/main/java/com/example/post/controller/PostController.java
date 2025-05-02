@@ -71,13 +71,10 @@ public class PostController {
                 postService.savePostTag(new PostTag(null, post.getId(), tag.getLabel(), userDTO.getUid(), null));
             });
 
-            postDTO.setAuthor(userDTO.getUsername());
-            postDTO.setNickname(userDTO.getNickname());
-            postDTO.setAvatar(userDTO.getAvatar());
-
             try {
-                ElasticPostUtils.insertPostToEs(elasticsearchClient, postDTO);
+                ElasticPostUtils.insertPostToEs(elasticsearchClient, PostBeanUtils.postEO(post));
             } catch (IOException e) {
+                e.printStackTrace();
                 return Response.success("帖子发布成功", Map.of("postId", String.valueOf(post.getId())));
             }
 
@@ -109,12 +106,12 @@ public class PostController {
 
         UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", post.getId()).set("content", postContent);
-        boolean updated = postService.update(null, updateWrapper);
+        boolean updated = postService.update(updateWrapper);
         if (updated) {
             try {
                 // 为什么上面插入不进行判断，去除html里面的所有tag，因为内部clean了
                 post.setContent(HtmlUtil.cleanHtmlTag(postContent));
-                ElasticPostUtils.updatePostContentInEs(elasticsearchClient, post);
+                ElasticPostUtils.updatePostContentInEs(elasticsearchClient, PostBeanUtils.postEO(post));
             } catch (IOException e) {
                 return Response.success("修改内容成功", Map.of("content", postContent));
             }
@@ -141,7 +138,7 @@ public class PostController {
                 Post post = new Post();
                 post.setId(Long.parseLong(pid));
                 post.setTitle(postTitle);
-                ElasticPostUtils.updatePostTitleInEs(elasticsearchClient, PostBeanUtils.postDTO(post));
+                ElasticPostUtils.updatePostTitleInEs(elasticsearchClient, PostBeanUtils.postEO(post));
             } catch (IOException e) {
                 return Response.success("修改标题成功", Map.of("title", postTitle));
             }
@@ -159,7 +156,7 @@ public class PostController {
      */
     @GetMapping("/list")
     public Response<Map<String, Object>> getPostList(@RequestParam String node, @RequestParam(required = false) Integer page) {
-
+        // 这里应该是可以加redis的，但是暂时实力不够，以后再加
         if ("latestPost".equalsIgnoreCase(node))
             return Response.success("获取最新帖子成功", postService.getLatestPostList(page));
 
@@ -200,6 +197,11 @@ public class PostController {
      */
     @GetMapping("/postInfo")
     public Response<Map<String, Object>> getPostInfo(@RequestParam String pid) {
+
+        UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("id", pid).setSql("view_number = view_number + 1");
+        boolean update = postService.update(updateWrapper);
+
         QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
         postQueryWrapper.eq("id", pid);
         Post post = postService.getOne(postQueryWrapper);
@@ -256,11 +258,6 @@ public class PostController {
         });
 
         post.setTags(newTags);
-        try {
-            ElasticPostUtils.updatePostTagsInEs(elasticsearchClient, post);
-        } catch (Exception e) {
-            return Response.success("已更新标签", Map.of("newTags", newTags));
-        }
         return Response.success("已更新标签", Map.of("newTags", newTags));
     }
 }

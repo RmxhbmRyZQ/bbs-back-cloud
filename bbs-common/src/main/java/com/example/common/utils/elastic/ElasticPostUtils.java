@@ -10,8 +10,7 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
-import com.example.common.domain.dto.PostDTO;
-import com.example.common.domain.dto.TagDTO;
+import com.example.common.domain.eo.PostEO;
 import lombok.Data;
 
 import java.io.IOException;
@@ -36,10 +35,6 @@ public class ElasticPostUtils {
         map.put("replyNumber", Property.of(p -> p.integer(IntegerNumberProperty.of(inp -> inp.index(true)))));
         map.put("viewNumber", Property.of(p -> p.integer(IntegerNumberProperty.of(inp -> inp.index(true)))));
         map.put("lastCommentTime", Property.of(p -> p.date(DateProperty.of(dp -> dp.index(true).format("yyyy-MM-dd HH:mm:ss")))));
-        map.put("tags", Property.of(p -> p.nested(NestedProperty.of(np -> np.enabled(true)))));
-        map.put("author", Property.of(p -> p.keyword(KeywordProperty.of(kp -> kp.index(true)))));
-        map.put("nickname", Property.of(p -> p.keyword(KeywordProperty.of(kp -> kp.index(true)))));
-        map.put("avatar", Property.of(p -> p.keyword(KeywordProperty.of(kp -> kp.index(true)))));
 
         CreateIndexResponse indexResponse = elasticsearchClient.indices().create(CreateIndexRequest.of(cir -> cir
                 .index("post")
@@ -49,7 +44,7 @@ public class ElasticPostUtils {
         return indexResponse.acknowledged();
     }
 
-    public static boolean insertAllPostByBulkOperation(ElasticsearchClient elasticsearchClient, List<PostDTO> posts) throws IOException {
+    public static boolean insertAllPostByBulkOperation(ElasticsearchClient elasticsearchClient, List<PostEO> posts) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
@@ -68,13 +63,13 @@ public class ElasticPostUtils {
         return !bulkResponse.errors(); //如果errors是false则代表执行过程没有错误产生，反之则有错误产生，取反后返回
     }
 
-    public static List<Hit<PostDTO>> searchPostsByKey(ElasticsearchClient elasticsearchClient, String key) throws IOException {
+    public static List<Hit<PostEO>> searchPostsByKey(ElasticsearchClient elasticsearchClient, String key) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
         }
 
-        SearchResponse<PostDTO> searchResponse = elasticsearchClient.search(sr -> sr
+        SearchResponse<PostEO> searchResponse = elasticsearchClient.search(sr -> sr
                         .index("post")
                         .query(q -> q
                                 .multiMatch(mmq -> mmq
@@ -90,16 +85,16 @@ public class ElasticPostUtils {
                                         .preTags("<span style=\"color: red;\">")
                                         .postTags("</span>")))
                 ,
-                PostDTO.class
+                PostEO.class
         );
 
         if (searchResponse.timedOut() || searchResponse.hits().total().value() == 0) {
             return null;
         }
 
-        List<Hit<PostDTO>> postHits = searchResponse.hits().hits();
+        List<Hit<PostEO>> postHits = searchResponse.hits().hits();
         postHits.forEach(postHit -> {
-            PostDTO post = postHit.source();
+            PostEO post = postHit.source();
             String title = "";
             String content = "";
             if (ObjectUtil.isNotNull(postHit.highlight())) {
@@ -116,7 +111,7 @@ public class ElasticPostUtils {
         return postHits;
     }
 
-    public static boolean insertPostToEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
+    public static boolean insertPostToEs(ElasticsearchClient elasticsearchClient, PostEO post) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
@@ -127,18 +122,18 @@ public class ElasticPostUtils {
         return "created".equals(indexResponse.result().jsonValue());
     }
 
-    public static boolean updatePostInEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
+    public static boolean updatePostInEs(ElasticsearchClient elasticsearchClient, PostEO post) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
         }
 
         post.setContent(StrUtil.cleanBlank(HtmlUtil.cleanHtmlTag(post.getContent())));
-        UpdateResponse<PostDTO> updateResponse = elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(post), PostDTO.class);
+        UpdateResponse<PostEO> updateResponse = elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(post), PostEO.class);
         return "updated".equals(updateResponse.result().jsonValue());
     }
 
-    public static boolean deletePostInEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
+    public static boolean deletePostInEs(ElasticsearchClient elasticsearchClient, PostEO post) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
@@ -147,19 +142,7 @@ public class ElasticPostUtils {
         return "deleted".equals(deleteResponse.result().jsonValue());
     }
 
-    public static void updatePostTagsInEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
-        boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
-        if (!indexExist) {
-            createPostIndex(elasticsearchClient);
-        }
-
-        Map<String, List<TagDTO>> map = new HashMap<>();
-        map.put("tags", post.getTags());
-
-        elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(map), PostDTO.class);
-    }
-
-    public static void updatePostTitleInEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
+    public static void updatePostTitleInEs(ElasticsearchClient elasticsearchClient, PostEO post) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
@@ -168,10 +151,10 @@ public class ElasticPostUtils {
         Map<String, String> map = new HashMap<>();
         map.put("title", post.getTitle());
 
-        elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(map), PostDTO.class);
+        elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(map), PostEO.class);
     }
 
-    public static void updatePostContentInEs(ElasticsearchClient elasticsearchClient, PostDTO post) throws IOException {
+    public static void updatePostContentInEs(ElasticsearchClient elasticsearchClient, PostEO post) throws IOException {
         boolean indexExist = ElasticUtils.isIndexExist(elasticsearchClient, "post");
         if (!indexExist) {
             createPostIndex(elasticsearchClient);
@@ -180,6 +163,6 @@ public class ElasticPostUtils {
         Map<String, String> map = new HashMap<>();
         map.put("content", StrUtil.cleanBlank(HtmlUtil.cleanHtmlTag(post.getContent())));
 
-        elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(map), PostDTO.class);
+        elasticsearchClient.update(ur -> ur.index("post").id(String.valueOf(post.getId())).doc(map), PostEO.class);
     }
 }

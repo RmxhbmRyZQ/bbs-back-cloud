@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.example.common.domain.dto.PostDTO;
+import com.example.common.domain.eo.PostEO;
 import com.example.common.domain.eo.UserEO;
 import com.example.common.response.Response;
 import com.example.common.response.ResponseCode;
@@ -25,13 +26,13 @@ public class SearchController {
     private final ElasticsearchClient elasticsearchClient;
 
     @GetMapping("/post")
-    public Response<Map<String, List<PostDTO>>> searchPostsByKey(@RequestParam String keyword) {
+    public Response<Map<String, List<PostEO>>> searchPostsByKey(@RequestParam String keyword) {
         try {
-            List<Hit<PostDTO>> postHits = ElasticPostUtils.searchPostsByKey(elasticsearchClient, keyword);
+            List<Hit<PostEO>> postHits = ElasticPostUtils.searchPostsByKey(elasticsearchClient, keyword);
             if (ObjectUtil.isNull(postHits)) {
                 return Response.success("没有与关键词匹配的结果");
             } else {
-                List<PostDTO> searchedPosts = new ArrayList<>();
+                List<PostEO> searchedPosts = new ArrayList<>();
                 postHits.forEach(postHit -> {
                     searchedPosts.add(postHit.source());
                 });

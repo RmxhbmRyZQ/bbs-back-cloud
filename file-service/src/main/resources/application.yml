@@ -1,26 +1,18 @@
 spring:
   application:
     name: file-service
+
   cloud:
     nacos:
       server-addr: 192.168.3.16:8848
       username: nacos
       password: nacos
-    openfeign:
-      okhttp:
-        enabled: true # 开启OKHttp连接池支持
 
   servlet:
     multipart:
       enabled: true
       max-file-size: 3MB
       max-request-size: 100MB
-
-  data:
-    redis:
-      host: 192.168.3.16
-      port: 6379
-      password: admin123
 
 avatar:
   remote-prefix: https://cravatar.cn/avatar/
@@ -36,8 +28,3 @@ upload:
 
 server:
   port: 8082
-
-elasticsearch:
-  host: 192.168.3.16
-  port: 9200
-  scheme: http

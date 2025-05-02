@@ -1,0 +1,7 @@
+spring:
+  rabbitmq:
+    host: ${bbs.mq.host:192.168.3.16}
+    port: ${bbs.mq.port:5672} # 端口
+    virtual-host: /bbs # 虚拟主机
+    username: ${bbs.mq.un:bbs} # 用户名
+    password: ${bbs.mq.pw:bbs-password} # 密码

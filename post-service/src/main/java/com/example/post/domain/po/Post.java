@@ -1,18 +1,18 @@
 package com.example.post.domain.po;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 
+import com.example.common.domain.dto.TagDTO;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-/**
- * @TableName post
- */
 @TableName(value ="post")
 @Data
+@NoArgsConstructor
 public class Post implements Serializable {
     private Long id;
 
@@ -22,6 +22,7 @@ public class Post implements Serializable {
 
     private String content;
 
+    @TableField(fill = FieldFill.INSERT)
     private String createTime;
 
     private Double priority;
@@ -40,31 +41,8 @@ public class Post implements Serializable {
 
     private Integer viewNumber;
 
+    @TableField(fill = FieldFill.INSERT)
     private String lastCommentTime;
-
-//    /**
-//     * 帖子标签
-//     */
-//    @TableField(exist = false)
-//    private List<Tag> tags;
-//
-//    /**
-//     * 作者用户名
-//     */
-//    @TableField(exist = false)
-//    private String author;
-//
-//    /**
-//     * 作者昵称
-//     */
-//    @TableField(exist = false)
-//    private String nickname;
-//
-//    /**
-//     * 作者头像
-//     */
-//    @TableField(exist = false)
-//    private String avatar;
 
     private static final long serialVersionUID = 1L;
 }

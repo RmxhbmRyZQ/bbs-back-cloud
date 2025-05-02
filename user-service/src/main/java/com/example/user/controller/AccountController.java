@@ -3,28 +3,26 @@ package com.example.user.controller;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
 import cn.hutool.captcha.generator.RandomGenerator;
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.example.common.domain.bo.UserBO;
 import com.example.common.domain.dto.RoleDTO;
+import com.example.common.domain.dto.UserDTO;
 import com.example.common.response.Response;
 import com.example.common.response.ResponseCode;
 import com.example.common.utils.RedisKeyUtils;
 import com.example.common.utils.elastic.ElasticUserUtils;
 import com.example.security.properties.JwtProperties;
 import com.example.security.utils.JwtUtils;
-import com.example.user.domain.po.Banned;
 import com.example.user.domain.po.User;
 import com.example.user.service.AccountService;
-import com.example.user.service.BannedService;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,9 +58,9 @@ public class AccountController {
 
     private final AuthenticationManager authenticationManager;
 
-    private final BannedService bannedService;
-
     private final JwtUtils jwtUtils;
+
+    private final UserRedisUtils userRedisUtils;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -115,17 +113,14 @@ public class AccountController {
 
         UserBO userBO = (UserBO) authentication.getPrincipal();
         if (Boolean.TRUE.equals(userBO.getUserDTO().getBanned())) {
-            QueryWrapper<Banned> bannedUserQueryWrapper = new QueryWrapper<>();
-            bannedUserQueryWrapper.eq("uid", userBO.getUserDTO().getUid());
-
-            Banned bannedUser = bannedService.getOne(bannedUserQueryWrapper);
-            if (ObjectUtil.isNotEmpty(bannedUser.getDeadline())) {
-                if (bannedUser.getDeadline().startsWith("2099")) {
+            String deadline = userBO.getUserDTO().getDeadline();
+            if (ObjectUtil.isNotEmpty(deadline)) {
+                if (deadline.startsWith("2099")) {
                     return Response.failed("登录失败，账号已被永久封禁");
                 } else {
                     String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                    if (now.compareTo(bannedUser.getDeadline()) < 0) {
-                        return Response.failed("登录失败，账号已被封禁", Map.of("deadline", bannedUser.getDeadline()));
+                    if (now.compareTo(deadline) < 0) {
+                        return Response.failed("登录失败，账号已被封禁", Map.of("deadline", deadline));
                     }
                 }
             }
@@ -135,7 +130,8 @@ public class AccountController {
         String accessToken = jwtUtils.createAccessToken(uid);
         String refreshToken = jwtUtils.createRefreshToken(uid);
 
-        redisTemplate.opsForValue().set(RedisKeyUtils.getLoggedUserKey(uid), userBO);
+        // 在读取UserDTO中已经加入Redis了
+        // redisTemplate.opsForValue().set(RedisKeyUtils.getKeyUserUidKey(uid), userBO.getUserDTO());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Map<String, Object> map = new HashMap<>();
@@ -156,11 +152,9 @@ public class AccountController {
             return Response.failed("请求过于频繁，请一天后重试");
         }
 
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("uid", uid).select("email");
-        User user = userService.getOne(queryWrapper);
+        UserDTO userDTO = userService.getByUid(uid);
 
-        Boolean sent = accountService.sendEmailCode(user.getEmail(), emailCode);
+        Boolean sent = accountService.sendEmailCode(userDTO.getEmail(), emailCode);
         if (sent) {
             String emailCodeKey = RedisKeyUtils.getEmailCodeKey(uid);
             redisTemplate.opsForValue().set(emailCodeKey, emailCode, 15, TimeUnit.MINUTES);
@@ -202,22 +196,21 @@ public class AccountController {
         userUpdateWrapper.eq("uid", String.valueOf(uid)).set("email_verified", true);
         boolean updated = userService.update(userUpdateWrapper);
         if (updated) {
-            String loggedUserKey = RedisKeyUtils.getLoggedUserKey(String.valueOf(uid));
-            UserBO userBO = (UserBO) redisTemplate.opsForValue().get(loggedUserKey);
-            if (ObjectUtil.isNotNull(userBO)) {
-                RoleDTO role = userBO.getUserDTO().getRole();
+            UserDTO userDTO = userService.getByUid(uid.toString());
+            if (ObjectUtil.isNotNull(userDTO)) {
+                RoleDTO role = userDTO.getRole();
                 if (role.getRid() != 1 && role.getRid() != 2) {
                     role.setRid(3);
                     userService.updateUserRole(uid, 3);
                 }
-                userBO.getUserDTO().setRole(role);
-                userBO.getUserDTO().setEmailVerified(true);
-                redisTemplate.opsForValue().set(loggedUserKey, userBO);
+                userDTO.setRole(role);
+                userDTO.setEmailVerified(true);
+                userRedisUtils.deleteUserCache(userDTO.getUid().toString(), userDTO.getUsername());
+//                redisUtils.cacheUser(userDTO);
             }
 
             try {
-                user.setEmailVerified(true);
-                ElasticUserUtils.updateUserEmailVerifiedInEs(elasticsearchClient, UserBeanUtils.userEO(user));
+                ElasticUserUtils.updateUserEmailVerifiedInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
             } catch (IOException e) {
                 return Response.success("邮箱已认证激活");
             }

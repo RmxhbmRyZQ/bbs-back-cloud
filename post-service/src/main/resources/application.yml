@@ -1,41 +1,9 @@
 spring:
   application:
     name: post-service
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 192.168.3.16:8848
-        username: nacos
-        password: nacos
 
-    openfeign:
-      okhttp:
-        enabled: true # 开启OKHttp连接池支持
-  datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.3.16:3306/post-service?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-
-  data:
-    redis:
-      host: 192.168.3.16
-      port: 6379
-      password: admin123
+  profiles:
+    active: local
 
 server:
   port: 8083
-
-jwt:
-  token-header: Authorization
-  token-prefix: "Bearer "
-  secret: "TA61ja7A@a3yh4gz2trGtASt3hg2w47A15gtAok2@#fQEOQ1azGK"
-  accessTokenTTL: 3600000 #accessToken过期时间，单位毫秒，3600000毫秒为两小时
-  refreshTokenTTL: 604800000 #refreshToken过期时间，单位毫秒，604800000毫秒为7天
-  auto-refresh-ttl: 120000 #凭证剩余时间小于该值时自动刷新，单位毫秒，1200000为二十分钟
-
-elasticsearch:
-  host: 192.168.3.16
-  port: 9200
-  scheme: http

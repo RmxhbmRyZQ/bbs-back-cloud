@@ -26,6 +26,8 @@ public class UserDTO {
 
     private Boolean banned;
 
+    private String deadline;
+
     private AuthorityDTO authority;
 
     private RoleDTO role;

@@ -35,7 +35,7 @@
             <artifactId>bbs-common</artifactId>
             <version>${version}</version>
         </dependency>
-
+        <!--访问静态资源就不需要security了-->
 <!--        <dependency>-->
 <!--            <groupId>bbs.example</groupId>-->
 <!--            <artifactId>bbs-security</artifactId>-->

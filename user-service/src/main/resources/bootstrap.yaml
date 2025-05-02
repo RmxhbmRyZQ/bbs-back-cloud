@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: user-service
+  cloud:
+    nacos:
+      server-addr: 192.168.3.16:8848
+      username: nacos
+      password: nacos
+      config:
+        file-extension: yaml
+        shared-configs:
+          - dataId: mysql.yaml
+          - dataId: elasticsearch.yaml
+          - dataId: rabbitmq.yaml
+          - dataId: security.yaml
+          - dataId: openfeign.yaml
+          - dataId: redis.yaml

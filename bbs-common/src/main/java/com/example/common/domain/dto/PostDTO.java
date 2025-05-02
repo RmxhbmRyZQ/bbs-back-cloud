@@ -1,6 +1,5 @@
 package com.example.common.domain.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.util.Date;
@@ -39,24 +38,20 @@ public class PostDTO {
     /**
      * 帖子标签
      */
-    @TableField(exist = false)
     private List<TagDTO> tags;
 
     /**
      * 作者用户名
      */
-    @TableField(exist = false)
     private String author;
 
     /**
      * 作者昵称
      */
-    @TableField(exist = false)
     private String nickname;
 
     /**
      * 作者头像
      */
-    @TableField(exist = false)
     private String avatar;
 }

@@ -1,0 +1,5 @@
+spring:
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true # 开启OKHttp连接池支持

@@ -1,27 +1,10 @@
 spring:
   application:
     name: user-service
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 192.168.3.16:8848
-        username: nacos
-        password: nacos
 
-    openfeign:
-      okhttp:
-        enabled: true # 开启OKHttp连接池支持
-  datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.3.16:3306/user-service?useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 3MB
-      max-request-size: 100MB
+  profiles:
+    active: local
+
   thymeleaf:
     mode: HTML
     prefix: classpath:/templates/
@@ -46,59 +29,12 @@ spring:
           ssl:
             enable: true
 
-  data:
-    redis:
-      host: 192.168.3.16
-      port: 6379
-      password: admin123
-
 #关于邮件的自定义属性
 mail:
   from: 635818021@qq.com #发送邮件的来源
   register:
     subject: "请查收您的验证码" #注册邮件的主题
 
-mybatis-plus:
-  mapper-locations: classpath:/mapper/*.xml
-  type-aliases-package: com.example.user.domain.po
-  global-config:
-    db-config:
-      id-type: assign_id #默认是雪花算法生成ID，这里显式写出来了
-      logic-delete-value: 1 #逻辑删除记录的值
-      logic-not-delete-value: 0 #逻辑未删除记录的值
-      logic-delete-field: deleted #逻辑删除对应的字段名
-
 server:
   port: 8081
 
-feign:
-  sentinel:
-    enabled: true # 开启Feign对Sentinel的整合
-
-seata:
-  registry: # TC服务注册中心的配置，微服务根据这些信息去注册中心获取tc服务地址
-    type: nacos # 注册中心类型 nacos
-    nacos:
-      server-addr: 192.168.3.16:8848 # nacos地址
-      namespace: "" # namespace，默认为空
-      group: DEFAULT_GROUP # 分组，默认是DEFAULT_GROUP
-      application: seata-server # seata服务名称
-      username: nacos
-      password: nacos
-  tx-service-group: bbs # 事务组名称
-  service:
-    vgroup-mapping: # 事务组与tc集群的映射关系
-      bbs: "default"
-
-jwt:
-  token-header: Authorization
-  token-prefix: "Bearer "
-  secret: "TA61ja7A@a3yh4gz2trGtASt3hg2w47A15gtAok2@#fQEOQ1azGK"
-  accessTokenTTL: 3600000 #accessToken过期时间，单位毫秒，3600000毫秒为两小时
-  refreshTokenTTL: 604800000 #refreshToken过期时间，单位毫秒，604800000毫秒为7天
-  auto-refresh-ttl: 120000 #凭证剩余时间小于该值时自动刷新，单位毫秒，1200000为二十分钟
-
-elasticsearch:
-  host: 192.168.3.16
-  port: 9200
-  scheme: http

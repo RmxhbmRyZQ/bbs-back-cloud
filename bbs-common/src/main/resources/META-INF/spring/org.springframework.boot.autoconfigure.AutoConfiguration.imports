@@ -2,3 +2,4 @@ com.example.common.config.RedisConfig
 com.example.common.config.ElasticsearchConfig
 com.example.common.config.ObjectMapperConfig
 com.example.common.config.MybatisPlusConfig
+com.example.common.config.MqConfig

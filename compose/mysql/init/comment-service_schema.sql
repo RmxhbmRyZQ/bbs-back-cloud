@@ -12,6 +12,7 @@ CREATE TABLE `comment`  (
   `parent_id` int NULL DEFAULT NULL COMMENT '子级回复的父级回复ID，根级评论为0',
   `reply_id` int NULL DEFAULT NULL COMMENT '楼中楼中回复目标楼层的ID',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `replies_num` int DEFAULT 0 COMMENT '当前评论的回复数',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `comments_pid`(`pid` ASC) USING BTREE,
   INDEX `comments_uid`(`from_uid` ASC) USING BTREE
@@ -19,6 +20,9 @@ CREATE TABLE `comment`  (
   -- ,CONSTRAINT `comments_pid` FOREIGN KEY (`pid`) REFERENCES `post` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   -- CONSTRAINT `comments_uid` FOREIGN KEY (`from_uid`) REFERENCES `user` (`uid`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB AUTO_INCREMENT = 70 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = DYNAMIC;
+
+-- ALTER TABLE `comment`
+--     ADD COLUMN `replies_num` int DEFAULT 0 COMMENT '当前评论的回复数';
 
 INSERT INTO `comment` VALUES (1, 1610095136614686721, 1591314523924168706, NULL, '<p>一道非常基本的杂项编码题，提示是有关base编码（除了base64，base32，base16，还有什么呢？），当时被提示所误导，想方设法找base8编码，没有找到。正确思路应该是查找关键词:base编码，emoji（题目本身），联立搜索找到能编码为emoji的base100，以下是github中用rust写的 <a href=\"https://github.com/AdamNiederer/base100\">base100</a> 编/解码仓库，可以按照 readme.md 提示拿到flag:</p>\n<blockquote>\n<p>欢迎来到躺平杯！这是flag1: flag{Happy_NEW_YEAR_2023}</p>\n</blockquote>\n<p>感兴趣可以试着读一读main.rc文件，我就不献丑了</p>\n', 0, 0, '2023-01-23 09:36:37');
 INSERT INTO `comment` VALUES (2, 1610095136614686721, 1591315551016943618, 1591314523924168706, '具体的事给我们具体的目标，十分明确，于是更容易有干劲。从具体事情中得到反馈，给我们更直接的激励，和易于感知的意义感。如果愿意，完全可以享受过程。', 1, 1, '2023-01-23 09:37:01');
