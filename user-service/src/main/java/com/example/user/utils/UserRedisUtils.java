@@ -39,6 +39,7 @@ public class UserRedisUtils {
     // 获取用户缓存（通过 username）
     public UserDTO getUserByUsername(String username) {
         Object uidObj = redisTemplate.opsForValue().get(RedisKeyUtils.getKeyUserUsernameKey(username));
+        if (uidObj == null) return null;
         return getUserByUid(uidObj.toString());
     }
 

@@ -2,12 +2,14 @@ package com.example.user.controller;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.api.client.FileClient;
 import com.example.common.domain.bo.UserBO;
 import com.example.common.domain.dto.UserDTO;
 import com.example.common.utils.elastic.ElasticUserUtils;
 import com.example.user.domain.po.User;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserMessageQueue;
 import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +22,10 @@ import com.example.common.response.Response;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -30,6 +34,7 @@ public class UserController {
     private final UserService userService;
     private final UserRedisUtils userRedisUtils;
     private final ElasticsearchClient elasticsearchClient;
+    private final UserMessageQueue userMessageQueue;
     private final FileClient fileClient;
     private final PasswordEncoder passwordEncoder;
 
@@ -60,6 +65,31 @@ public class UserController {
         return Response.success("获取用户信息成功", userDTO);
     }
 
+    @GetMapping("/user/page")
+    public Response<Object> getUserPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        // 使用 MyBatis-Plus 分页查询
+        Page<User> userPage = new Page<>(page, size);
+        Page<User> resultPage = userService.page(userPage);
+
+        // 转换为 UserDTO 列表
+        List<UserDTO> dtoList = resultPage.getRecords().stream()
+                .map(UserBeanUtils::userDTO)
+                .collect(Collectors.toList());
+
+        // 构建返回结构
+        Map<String, Object> map = new HashMap<>();
+        map.put("total", resultPage.getTotal());
+        map.put("pages", resultPage.getPages());
+        map.put("current", resultPage.getCurrent());
+        map.put("size", resultPage.getSize());
+        map.put("records", dtoList);
+
+        return Response.success("分页获取用户信息成功", map);
+    }
+
     @GetMapping("/userId")
     public Response<UserDTO> getUserProfileByUid(@RequestParam("uid") String uid) {
         UserDTO userDTO = userService.getByUid(uid);
@@ -72,7 +102,7 @@ public class UserController {
 
     @GetMapping("/userCount")
     public Response<Long> getTotalUserNumber() {
-        return Response.success("获取用户总数成功", userService.count());
+        return Response.success("获取用户总数成功", userService.count(null));
     }
 
     @GetMapping("/updateNickname")
@@ -96,12 +126,13 @@ public class UserController {
             userRedisUtils.deleteUserCache(userDTO.getUid().toString(), userDTO.getUsername());
 //            redisUtils.cacheUser(userDTO);
 
-            try {
-                ElasticUserUtils.updateUserNicknameInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return Response.success("昵称已变更");
-            }
+            userMessageQueue.sendUpdateNickname(UserBeanUtils.userEO(userDTO));
+//            try {
+//                ElasticUserUtils.updateUserNicknameInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                return Response.success("昵称已变更");
+//            }
             return Response.success("昵称已变更");
         }
 
@@ -155,11 +186,12 @@ public class UserController {
             userRedisUtils.deleteUserCache(userBO.getUserDTO().getUid().toString(), userBO.getUserDTO().getUsername());
 //            redisUtils.cacheUser(userBO.getUserDTO());
 
-            try {
-                ElasticUserUtils.updateUserAvatarInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));
-            } catch (IOException e) {
-                return Response.success("更新头像成功", Map.of("newAvatar", totalAvatarPath));
-            }
+            userMessageQueue.sendUpdateAvatar(UserBeanUtils.userEO(userBO.getUserDTO()));
+//            try {
+//                ElasticUserUtils.updateUserAvatarInEs(elasticsearchClient, UserBeanUtils.userEO(userBO.getUserDTO()));
+//            } catch (IOException e) {
+//                return Response.success("更新头像成功", Map.of("newAvatar", totalAvatarPath));
+//            }
             return Response.success("更新头像成功", Map.of("newAvatar", totalAvatarPath));
         }
 

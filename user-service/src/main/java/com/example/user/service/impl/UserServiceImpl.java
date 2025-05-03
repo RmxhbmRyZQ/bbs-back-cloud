@@ -68,6 +68,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(User::getUid, uid);
             User user = userMapper.selectOne(queryWrapper);
+            if (user == null) return null;
             userDTO = getUserDTO(user);
             checkBanned(userDTO, uid);
         } else {

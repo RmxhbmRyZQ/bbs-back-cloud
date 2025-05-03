@@ -99,7 +99,7 @@ services:
       - "9300:9300"
     volumes:
       - es-data:/usr/share/elasticsearch/data
-      - es-plugins:/usr/share/elasticsearch/plugins
+      - ./es-plugins:/usr/share/elasticsearch/plugins
     networks:
       - bbs-net
 
@@ -150,12 +150,14 @@ services:
       - mq-plugins:/plugins
     networks:
       - bbs-net
-      
+# 安装延迟队列命令
+# sudo cp mq-plugins/rabbitmq_delayed_message_exchange-3.12.0.ez /var/lib/docker/volumes/compose_mq-plugins/_data/
+# sudo docker exec -it rabbitmq rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+
 volumes:
   mysql-data:
   redis-data:
   es-data:
-  es-plugins:
   mq-plugins:
 
 networks:

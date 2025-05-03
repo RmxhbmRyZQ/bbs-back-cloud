@@ -54,4 +54,8 @@ public class PostDTO {
      * 作者头像
      */
     private String avatar;
+
+    private RoleDTO role;
+
+    private Integer uuid;
 }

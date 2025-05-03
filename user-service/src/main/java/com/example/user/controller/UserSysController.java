@@ -11,6 +11,7 @@ import com.example.user.domain.po.Role;
 import com.example.user.domain.po.User;
 import com.example.user.service.BannedService;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserMessageQueue;
 import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,8 @@ public class UserSysController {
     private final BannedService bannedService;
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final UserMessageQueue userMessageQueue;
 
     private final UserRedisUtils userRedisUtils;
 
@@ -77,11 +80,13 @@ public class UserSysController {
             User user = new User();
             user.setUid(uid);
             user.setBanned(true);
-            try {
-                ElasticUserUtils.updateUserBannedStatusInEs(elasticsearchClient, UserBeanUtils.userEO(user));
-            } catch (IOException e) {
-                return Response.success("封禁成功");
-            }
+
+            userMessageQueue.sendBannedUser(UserBeanUtils.userEO(user));
+//            try {
+//                ElasticUserUtils.updateUserBannedStatusInEs(elasticsearchClient, UserBeanUtils.userEO(user));
+//            } catch (IOException e) {
+//                return Response.success("封禁成功");
+//            }
             return Response.success("封禁成功");
         } else return Response.failed("封禁失败");
     }
@@ -106,11 +111,13 @@ public class UserSysController {
             User user = new User();
             user.setUid(Long.valueOf(uid));
             user.setBanned(false);
-            try {
-                ElasticUserUtils.updateUserBannedStatusInEs(elasticsearchClient, UserBeanUtils.userEO(user));
-            } catch (IOException e) {
-                return Response.success("解除封禁成功");
-            }
+
+            userMessageQueue.sendUnbannedUser(UserBeanUtils.userEO(user));
+//            try {
+//                ElasticUserUtils.updateUserBannedStatusInEs(elasticsearchClient, UserBeanUtils.userEO(user));
+//            } catch (IOException e) {
+//                return Response.success("解除封禁成功");
+//            }
             return Response.success("解除封禁成功");
         } else return Response.failed("解除封禁失败");
     }

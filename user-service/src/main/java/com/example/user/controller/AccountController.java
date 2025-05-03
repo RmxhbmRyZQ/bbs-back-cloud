@@ -22,6 +22,7 @@ import com.example.security.utils.JwtUtils;
 import com.example.user.domain.po.User;
 import com.example.user.service.AccountService;
 import com.example.user.service.UserService;
+import com.example.user.utils.UserMessageQueue;
 import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import io.jsonwebtoken.Claims;
@@ -65,6 +66,8 @@ public class AccountController {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final UserMessageQueue userMessageQueue;
 
     /**
      * 用户注册
@@ -209,11 +212,12 @@ public class AccountController {
 //                redisUtils.cacheUser(userDTO);
             }
 
-            try {
-                ElasticUserUtils.updateUserEmailVerifiedInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
-            } catch (IOException e) {
-                return Response.success("邮箱已认证激活");
-            }
+            userMessageQueue.sendUpdateEmailVerified(UserBeanUtils.userEO(userDTO));
+//            try {
+//                ElasticUserUtils.updateUserEmailVerifiedInEs(elasticsearchClient, UserBeanUtils.userEO(userDTO));
+//            } catch (IOException e) {
+//                return Response.success("邮箱已认证激活");
+//            }
             return Response.success("邮箱已认证激活");
         } else return Response.failed("出现错误，请稍后重试");
     }

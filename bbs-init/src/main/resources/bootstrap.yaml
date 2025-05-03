@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: bbs-init
+  cloud:
+    nacos:
+      server-addr: 192.168.3.16:8848
+      username: nacos
+      password: nacos

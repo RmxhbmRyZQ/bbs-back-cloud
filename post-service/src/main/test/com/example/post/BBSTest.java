@@ -9,6 +9,7 @@ import com.example.api.client.UserClient;
 import com.example.common.domain.dto.PostDTO;
 import com.example.common.domain.dto.TagDTO;
 import com.example.common.domain.dto.UserDTO;
+import com.example.common.utils.RedisKeyUtils;
 import com.example.common.utils.elastic.ElasticPostUtils;
 import com.example.common.utils.elastic.ElasticUtils;
 import com.example.post.domain.po.Post;
@@ -20,6 +21,8 @@ import com.example.post.utils.PostBeanUtils;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,5 +90,22 @@ public class BBSTest {
         postDTO.setAvatar(userDTO.getAvatar());
 
         return postDTO;
+    }
+
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
+
+    @Test
+    public void redisLuaTest() {
+        DefaultRedisScript<String> script = new DefaultRedisScript<>();
+
+        script.setScriptText("""
+            local raw = redis.call('HGET', KEYS[1], 'viewNumber')
+            local view = raw or 0
+            return ARGV[1]
+        """);
+        script.setResultType(String.class);
+        List<String> postDetailKey = List.of(RedisKeyUtils.getPostDetailKey("1917768509463478273"));
+        System.out.println(redisTemplate.execute(script, postDetailKey, "1"));
     }
 }

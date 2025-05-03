@@ -6,4 +6,5 @@ import lombok.Data;
 public class RoleDTO {
     private Integer rid;
     private String name;
+    private String alias;
 }

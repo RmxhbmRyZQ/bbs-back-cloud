@@ -10,6 +10,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 public class UserHeaderAuthenticationFilter extends OncePerRequestFilter {
     @Resource
@@ -42,7 +44,7 @@ public class UserHeaderAuthenticationFilter extends OncePerRequestFilter {
         Object o = redisTemplate.opsForValue().get(redisKey);
 
         if (o == null) {
-            o = userClient.getUserProfileByUid(userId);
+            o = userClient.getUserProfileByUid(userId).getData();
         }
 
         if (o != null && o instanceof UserDTO) {

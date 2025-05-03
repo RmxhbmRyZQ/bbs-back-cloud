@@ -14,6 +14,8 @@ public class RedisKeyUtils {
     private static final String PREFIX_POST_NUMBER = "status:post:number";
     private static final String KEY_USER_UID_KEY = "user:uid:";
     private static final String KEY_USER_USERNAME_KEY = "user:username:";
+    private static final String POST_DETAIL_KEY = "post:detail:";
+    private static final String POST_DELAY_KEY = "post:delay:";
 
     public static String getCaptchaKey(String captchaOwnerUUID) {
         return PREFIX_CAPTCHA + SPLIT + captchaOwnerUUID;
@@ -61,5 +63,13 @@ public class RedisKeyUtils {
 
     public static String getKeyUserUsernameKey(String username) {
         return KEY_USER_USERNAME_KEY + username;
+    }
+
+    public static String getPostDetailKey(String pid) {
+        return POST_DETAIL_KEY + pid;
+    }
+
+    public static String getPostDelayKey(String pid) {
+        return POST_DETAIL_KEY + pid;
     }
 }

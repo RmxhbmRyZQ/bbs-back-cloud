@@ -57,7 +57,7 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/static/**", "/avatar/**").permitAll()
                 .requestMatchers("/login", "/register").permitAll()
-                .requestMatchers("/_checkUsernameUnique", "/_checkEmailUnique", "/_captcha", "/_checkCaptcha", "/_emailCode", "/_checkEmailVerificationCode", "banned").permitAll()
+                .requestMatchers("/_checkUsernameUnique", "/_checkEmailUnique", "/_captcha", "/_checkCaptcha", "/_emailCode", "/_checkEmailVerificationCode").permitAll()
                 .requestMatchers("/list", "/postInfo", "/getComments", "/getReplies", "/userProfile", "/userId", "/userPosts", "/tags", "/tag", "/tagOption",
                         "/tagPosts", "/tagsAndOptions", "/search/post", "/search/user").permitAll()
                 .requestMatchers("/sys-ctrl/tag", "/sys-ctrl/tagsAndOptions").permitAll()

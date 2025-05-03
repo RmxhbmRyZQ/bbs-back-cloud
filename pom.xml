@@ -11,6 +11,7 @@
         <module>bbs-common</module>
         <module>bbs-security</module>
         <module>bbs-api</module>
+        <module>bbs-init</module>
         <module>gateway</module>
     </modules>
     <parent>

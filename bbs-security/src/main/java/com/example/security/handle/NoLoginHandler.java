@@ -16,7 +16,7 @@ public class NoLoginHandler implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest req, HttpServletResponse res, AuthenticationException e) throws IOException {
         res.setContentType("application/json;charset=utf-8");
-        String result = "{\"code\": " + ResponseCode.FORBIDDEN.getCode() + ", \"message\": \"未登录或Token无效\", \"data\": null}";
+        String result = "{\"code\": " + ResponseCode.FORBIDDEN.getCode() + ", \"message\": \"未登录或Token无效\"}";
         try {
             res.getWriter().println(result);
         } finally {

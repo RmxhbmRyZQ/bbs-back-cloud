@@ -20,6 +20,7 @@ import com.example.user.mapper.UserMapper;
 import com.example.user.service.AccountService;
 import com.example.user.service.UserService;
 import com.example.user.utils.UserBeanUtils;
+import com.example.user.utils.UserMessageQueue;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -61,6 +62,8 @@ public class AccountServiceImpl implements AccountService {
     private final UserMapper userMapper;
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final UserMessageQueue userMessageQueue;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -128,13 +131,14 @@ public class AccountServiceImpl implements AccountService {
                 redisTemplate.opsForValue().increment(userNumberKey);
             } else redisTemplate.opsForValue().set(userNumberKey, userMapper.selectCount(null));
 
-            try {
-                ElasticUserUtils.insertUserToEs(elasticsearchClient, UserBeanUtils.userEO(user));
-            } catch (IOException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-//                return true;
-            }
+            userMessageQueue.sendInsert(UserBeanUtils.userEO(user));
+//            try {
+//                ElasticUserUtils.insertUserToEs(elasticsearchClient, UserBeanUtils.userEO(user));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+////                return true;
+//            }
             return true;
         }
 

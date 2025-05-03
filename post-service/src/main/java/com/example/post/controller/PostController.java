@@ -4,6 +4,7 @@ import cn.hutool.http.HtmlUtil;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.api.client.SensitiveClient;
 import com.example.api.client.UserClient;
 import com.example.api.dto.UpdateComment;
@@ -21,6 +22,8 @@ import com.example.post.domain.po.Tag;
 import com.example.post.service.PostService;
 import com.example.post.service.TagService;
 import com.example.post.utils.PostBeanUtils;
+import com.example.post.utils.PostMessageQueue;
+import com.example.post.utils.PostRedisUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +33,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,6 +51,10 @@ public class PostController {
     private final ElasticsearchClient elasticsearchClient;
 
     private final TagService tagService;
+
+    private final PostRedisUtils postRedisUtils;
+
+    private final PostMessageQueue postMessageQueue;
 
     /**
      * 发布帖子
@@ -71,12 +82,13 @@ public class PostController {
                 postService.savePostTag(new PostTag(null, post.getId(), tag.getLabel(), userDTO.getUid(), null));
             });
 
-            try {
-                ElasticPostUtils.insertPostToEs(elasticsearchClient, PostBeanUtils.postEO(post));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return Response.success("帖子发布成功", Map.of("postId", String.valueOf(post.getId())));
-            }
+            postMessageQueue.sendInsert(PostBeanUtils.postEO(post));
+//            try {
+//                ElasticPostUtils.insertPostToEs(elasticsearchClient, PostBeanUtils.postEO(post));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                return Response.success("帖子发布成功", Map.of("postId", String.valueOf(post.getId())));
+//            }
 
             return Response.success("帖子发布成功", Map.of("postId", String.valueOf(post.getId())));
         }
@@ -91,6 +103,11 @@ public class PostController {
                 .setSql("reply_number = reply_number + 1")
                 .setSql("last_comment_time = '" + updateComment.getCreateTime() + "'");
         boolean update = postService.update(updateWrapper);
+
+        if (update) {
+            postRedisUtils.updateReplyAndTime(updateComment.getPid().toString(), updateComment.getCreateTime());
+        }
+
         return Response.success("操作成功", update);
     }
 
@@ -108,13 +125,15 @@ public class PostController {
         updateWrapper.eq("id", post.getId()).set("content", postContent);
         boolean updated = postService.update(updateWrapper);
         if (updated) {
-            try {
-                // 为什么上面插入不进行判断，去除html里面的所有tag，因为内部clean了
-                post.setContent(HtmlUtil.cleanHtmlTag(postContent));
-                ElasticPostUtils.updatePostContentInEs(elasticsearchClient, PostBeanUtils.postEO(post));
-            } catch (IOException e) {
-                return Response.success("修改内容成功", Map.of("content", postContent));
-            }
+            postRedisUtils.deletePostDetail(post.getId().toString());
+            post.setContent(HtmlUtil.cleanHtmlTag(postContent));
+            postMessageQueue.sendUpdateContent(PostBeanUtils.postEO(post));
+//            try {
+//                // 为什么上面插入不进行判断，去除html里面的所有tag，因为内部clean了
+//                ElasticPostUtils.updatePostContentInEs(elasticsearchClient, PostBeanUtils.postEO(post));
+//            } catch (IOException e) {
+//                return Response.success("修改内容成功", Map.of("content", postContent));
+//            }
             return Response.success("修改内容成功", Map.of("content", postContent));
         }
 
@@ -132,16 +151,18 @@ public class PostController {
 
         UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", pid).set("title", HtmlUtil.escape(postTitle));  // 将html都换成转义字符，上面的内容更新也换成这样更好
-        boolean updated = postService.update(null, updateWrapper);
+        boolean updated = postService.update(updateWrapper);
         if (updated) {
-            try {
-                Post post = new Post();
-                post.setId(Long.parseLong(pid));
-                post.setTitle(postTitle);
-                ElasticPostUtils.updatePostTitleInEs(elasticsearchClient, PostBeanUtils.postEO(post));
-            } catch (IOException e) {
-                return Response.success("修改标题成功", Map.of("title", postTitle));
-            }
+            postRedisUtils.deletePostDetail(pid);
+            Post post = new Post();
+            post.setId(Long.parseLong(pid));
+            post.setTitle(postTitle);
+            postMessageQueue.sendUpdateTitle(PostBeanUtils.postEO(post));
+//            try {
+//                ElasticPostUtils.updatePostTitleInEs(elasticsearchClient, PostBeanUtils.postEO(post));
+//            } catch (IOException e) {
+//                return Response.success("修改标题成功", Map.of("title", postTitle));
+//            }
             return Response.success("修改标题成功", Map.of("title", postTitle));
         }
 
@@ -167,6 +188,31 @@ public class PostController {
             return Response.success("获取热门帖子成功", postService.getHotPostList(page));
 
         return Response.failed("节点错误");
+    }
+
+    @GetMapping("/post/page")
+    public Response<Object> getPostPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        // 使用 MyBatis-Plus 分页查询
+        Page<Post> userPage = new Page<>(page, size);
+        Page<Post> resultPage = postService.page(userPage);
+
+        // 转换为 UserDTO 列表
+        List<PostDTO> dtoList = resultPage.getRecords().stream()
+                .map(PostBeanUtils::postDTO)
+                .collect(Collectors.toList());
+
+        // 构建返回结构
+        Map<String, Object> map = new HashMap<>();
+        map.put("total", resultPage.getTotal());
+        map.put("pages", resultPage.getPages());
+        map.put("current", resultPage.getCurrent());
+        map.put("size", resultPage.getSize());
+        map.put("records", dtoList);
+
+        return Response.success("分页获取帖子信息成功", map);
     }
 
     @GetMapping("/userPosts")
@@ -198,42 +244,73 @@ public class PostController {
     @GetMapping("/postInfo")
     public Response<Map<String, Object>> getPostInfo(@RequestParam String pid) {
 
-        UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("id", pid).setSql("view_number = view_number + 1");
-        boolean update = postService.update(updateWrapper);
+//        UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
+//        updateWrapper.eq("id", pid).setSql("view_number = view_number + 1");
+//        boolean update = postService.update(updateWrapper);
+        delayPostUpdate(pid);  // 每次访问都更新数据库不太利于高并发，这里使用延迟任务
 
-        QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
-        postQueryWrapper.eq("id", pid);
-        Post post = postService.getOne(postQueryWrapper);
+        PostDTO postDTO = postRedisUtils.getPostDetailFromCache(pid);
+        if (postDTO == null) {
 
-        if (ObjectUtil.isNull(post)) {
-            return Response.failed(ResponseCode.NOT_FOUND.getCode(), "请检查URL是否输入正确");
+            QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
+            postQueryWrapper.eq("id", pid);
+            Post post = postService.getOne(postQueryWrapper);
+
+            if (ObjectUtil.isNull(post)) {
+                return Response.failed(ResponseCode.NOT_FOUND.getCode(), "请检查URL是否输入正确");
+            }
+            postDTO = PostBeanUtils.postDTO(post);
+
+            List<PostTag> postTags = postService.getPostTags(pid);
+            List<TagDTO> tags = new ArrayList<>();
+            postTags.forEach(tagPost -> {
+                QueryWrapper<Tag> tagQueryWrapper = new QueryWrapper<>();
+                tagQueryWrapper.eq("label", tagPost.getTagLabel());
+                Tag tag = tagService.getOne(tagQueryWrapper);
+                tags.add(PostBeanUtils.tagDTO(tag));
+            });
+            postDTO.setTags(tags);
+
+            UserDTO userDTO = userClient.getUserProfileByUid(String.valueOf(postDTO.getUid())).getData();
+            postDTO.setAvatar(userDTO.getAvatar());
+            postDTO.setAuthor(userDTO.getUsername());
+            postDTO.setNickname(userDTO.getNickname());
+            postDTO.setRole(userDTO.getRole());
+            postDTO.setUuid(userDTO.getId());
+
+            postRedisUtils.cachePostDetail(postDTO);
+        } else {
+            postDTO.setViewNumber(postRedisUtils.incrViewNumber(postDTO.getId().toString()).intValue());
         }
-        PostDTO postDTO = PostBeanUtils.postDTO(post);
-
-        List<PostTag> postTags = postService.getPostTags(pid);
-        List<TagDTO> tags = new ArrayList<>();
-        postTags.forEach(tagPost -> {
-            QueryWrapper<Tag> tagQueryWrapper = new QueryWrapper<>();
-            tagQueryWrapper.eq("label", tagPost.getTagLabel());
-            Tag tag = tagService.getOne(tagQueryWrapper);
-            tags.add(PostBeanUtils.tagDTO(tag));
-        });
-        postDTO.setTags(tags);
-
-        UserDTO userDTO = userClient.getUserProfileByUid(String.valueOf(postDTO.getUid())).getData();
 
         Map<String, Object> map = new HashMap<>();
         map.put("post", postDTO);
-        map.put("id", userDTO.getId());
-        map.put("uid", post.getUid());
-        map.put("username", userDTO.getUsername());
-        map.put("nickname", userDTO.getNickname());
-        map.put("avatar", userDTO.getAvatar());
-        map.put("role", userDTO.getRole());
+        map.put("id", postDTO.getUuid());
+        map.put("uid", postDTO.getUid());
+        map.put("username", postDTO.getAuthor());
+        map.put("nickname", postDTO.getNickname());
+        map.put("avatar", postDTO.getAvatar());
+        map.put("role", postDTO.getRole());
 
         return Response.success("获取帖子详情成功", map);
     }
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    public void delayPostUpdate(String pid) {
+        if (!postRedisUtils.addPostDelayKey(pid, 1)) return;  // 先设置 delay key
+
+        scheduler.schedule(() -> {  // 设置延迟任务
+            PostDTO postDTO = postRedisUtils.getPostDetailFromCache(pid);
+            if (postDTO != null) {
+                UpdateWrapper<Post> updateWrapper = new UpdateWrapper<>();
+                updateWrapper.eq("id", pid).set("view_number", postDTO.getViewNumber());
+                postService.update(updateWrapper);
+            }
+            postRedisUtils.removePostDelayKey(pid);
+        }, 1, TimeUnit.MINUTES);
+    }
+
 
     @GetMapping("/poseCount")
     Response<Long> getTotalPostNumber() {

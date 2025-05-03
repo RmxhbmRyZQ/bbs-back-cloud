@@ -18,4 +18,9 @@ public interface UserClient {
 
     @GetMapping("/userCount")
     public Response<Long> getTotalUserNumber();
+
+    @GetMapping("/user/page")
+    public Response<Object> getUserPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size);
 }
