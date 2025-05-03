@@ -1,0 +1,1 @@
+[{"app":"post-service","count":500.0,"gmtCreate":1745765090678,"gmtModified":1745765090678,"grade":0,"id":1,"ip":"192.168.3.2","limitApp":"default","minRequestAmount":5,"port":8720,"resource":"GET:http://user-service/userId","slowRatioThreshold":0.5,"statIntervalMs":1000,"timeWindow":30}]

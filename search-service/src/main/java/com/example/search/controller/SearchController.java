@@ -19,6 +19,7 @@ import com.example.common.utils.elastic.ElasticUserUtils;
 import com.example.common.utils.elastic.ElasticUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -73,6 +74,7 @@ public class SearchController {
     }
 
     @PostMapping("/addPosts")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<String> insertAllPostToEs() {
         try {
 
@@ -121,6 +123,7 @@ public class SearchController {
     }
 
     @PostMapping("/addUsers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<String> insertAllUserToEs() {
         try {
             // 获取用户总数

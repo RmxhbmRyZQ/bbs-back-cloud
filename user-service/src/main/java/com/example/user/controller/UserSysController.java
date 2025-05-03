@@ -15,6 +15,7 @@ import com.example.user.utils.UserMessageQueue;
 import com.example.user.utils.UserRedisUtils;
 import com.example.user.utils.UserBeanUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,6 +41,7 @@ public class UserSysController {
     private final UserRedisUtils userRedisUtils;
 
     @GetMapping("/users")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, List<User>>> getAllUser() {
         List<User> users = userService.list();  // 这里应该分页
         users.forEach(user -> {
@@ -56,6 +58,7 @@ public class UserSysController {
     }
 
     @PostMapping("/banUser")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @Transactional
     public Response<Object> banUser(@RequestBody Banned bannedUser) {
         boolean saved = bannedService.save(bannedUser);
@@ -92,6 +95,7 @@ public class UserSysController {
     }
 
     @DeleteMapping("/banUser")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Object> cancelBanUser(@RequestParam String uid) {
         QueryWrapper<Banned> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("uid", uid);

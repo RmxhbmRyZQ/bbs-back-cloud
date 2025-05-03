@@ -2,6 +2,7 @@ package com.example.post.controller;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HtmlUtil;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -26,6 +27,7 @@ import com.example.post.utils.PostMessageQueue;
 import com.example.post.utils.PostRedisUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -62,6 +64,7 @@ public class PostController {
      * @return result
      */
     @PostMapping("/post")
+    @Transactional
     public Response<Map<String, String>> doPost(@RequestBody PostDTO postDTO) {
         UserBO userBO = (UserBO) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         UserDTO userDTO = userBO.getUserDTO();

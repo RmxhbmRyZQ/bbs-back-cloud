@@ -8,6 +8,7 @@ import com.example.monitor.service.SensitiveWordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class SensitiveController {
     private final RedisTemplate<String, SensitiveWord> redisTemplate;
 
     @PostMapping("/sensitiveWord")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, SensitiveWord>> addSensitiveWord(@RequestBody SensitiveWord sensitiveWord) {
         boolean saved = sensitiveWordService.save(sensitiveWord);
         if (saved) {
@@ -47,6 +49,7 @@ public class SensitiveController {
     }
 
     @PutMapping("/sensitiveWord")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, SensitiveWord>> updateSensitiveWord(@RequestBody SensitiveWord sensitiveWord) {
         QueryWrapper<SensitiveWord> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("id", sensitiveWord.getId());

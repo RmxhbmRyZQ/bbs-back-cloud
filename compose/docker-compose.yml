@@ -44,15 +44,6 @@ services:
     networks:
       - bbs-net
 
-#  sentinel:
-#    image: bladex/sentinel-dashboard:1.8.6
-#    container_name: sentinel
-#    environment:
-#      TZ: Asia/Shanghai
-#    ports:
-#      - "8858:8858"
-#    networks:
-#      - bbs-net
   sentinel:
     image: openjdk:17
     container_name: sentinel-dashboard
@@ -63,27 +54,10 @@ services:
       java
       -Dserver.port=8090
       -Dcsp.sentinel.dashboard.server=localhost:8090
-      -Dproject.name=sentinel-dashboard
+      -Dsentinel.dashboard.metric.queryIntervalMs=300000
       -jar sentinel-dashboard.jar
     ports:
       - "8090:8090"
-    networks:
-      - bbs-net
-      
-  seata-server:
-    image: seataio/seata-server:1.7.1
-    container_name: seata-server
-    ports:
-      - "7099:7099"
-      - "8099:8099"
-    environment:
-      SEATA_IP: 192.168.3.16
-    volumes:
-      - ./seata:/seata-server/resources
-    privileged: true
-    depends_on:
-      - mysql
-      - nacos
     networks:
       - bbs-net
 
@@ -102,28 +76,6 @@ services:
       - ./es-plugins:/usr/share/elasticsearch/plugins
     networks:
       - bbs-net
-
-#  elasticsearch:
-#    image: elasticsearch:8.11.3
-#    container_name: elasticsearch
-#    environment:
-#      - discovery.type=single-node
-#      - xpack.security.enabled=true
-#      - xpack.security.http.ssl.enabled=true
-#      - xpack.security.transport.ssl.enabled=true
-#      - ELASTIC_PASSWORD=admin123
-#      - xpack.security.authc.api_key.enabled=true
-#      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-#    ports:
-#      - "9200:9200"
-#      - "9300:9300"
-#    volumes:
-#      - es-data:/usr/share/elasticsearch/data
-#      - es-plugins:/usr/share/elasticsearch/plugins
-#    networks:
-#      - bbs-net
-# sudo docker exec -it elasticsearch ./bin/elasticsearch-plugin install https://get.infini.cloud/elasticsearch/analysis-ik/8.11.3
-# sudo docker exec -it elasticsearch ./bin/elasticsearch-plugin install https://release.infinilabs.com/analysis-ik/stable/elasticsearch-analysis-ik-8.11.3.zip
 
   kibana:
     image: kibana:8.11.3

@@ -72,6 +72,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
     }
 
     @Override
+    @Transactional
     public Boolean doComment(Comment comment) {
         List<String> sensitiveWords = sensitiveClient.getSensitiveWord().getData();
         String commentContent = SensitiveWordUtils.stringSearchEx2Filter(comment.getContent(), sensitiveWords);
@@ -85,6 +86,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
             if (updated) {
                 comment.setContent(commentContent);
                 return true;
+            } else {
+                throw new RuntimeException("评论已保存，但更新帖子评论信息失败，触发回滚");
             }
         }
         return false;

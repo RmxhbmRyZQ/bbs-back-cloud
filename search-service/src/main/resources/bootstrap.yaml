@@ -1,6 +1,6 @@
 spring:
   application:
-    name: user-service
+    name: search-service
   cloud:
     nacos:
       server-addr: 192.168.3.16:8848

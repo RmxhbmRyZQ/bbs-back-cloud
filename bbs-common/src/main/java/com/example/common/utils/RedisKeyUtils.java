@@ -70,6 +70,6 @@ public class RedisKeyUtils {
     }
 
     public static String getPostDelayKey(String pid) {
-        return POST_DETAIL_KEY + pid;
+        return POST_DELAY_KEY + pid;
     }
 }

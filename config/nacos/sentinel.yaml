@@ -1,0 +1,33 @@
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: ${bbs.sentinel.host:192.168.3.16}:${bbs.sentinel.port:8090}
+        port: ${bbs.sentinel.tport}  # 必须是和控制台尝试访问的一致
+      http-method-specify: true
+      datasource:
+        ds1:
+          nacos:
+            server-addr: ${spring.cloud.nacos.server-addr}
+            data-id: ${spring.application.name}-flow-rules
+            group-id: SENTINEL_GROUP
+            data-type: json
+            rule-type: flow
+            username: ${spring.cloud.nacos.username}
+            password: ${spring.cloud.nacos.password}
+            namespace:
+
+        ds2:
+          nacos:
+            server-addr: ${spring.cloud.nacos.server-addr}
+            data-id: ${spring.application.name}-degrade-rules
+            group-id: SENTINEL_GROUP
+            data-type: json
+            rule-type: degrade
+            username: ${spring.cloud.nacos.username}
+            password: ${spring.cloud.nacos.password}
+            namespace:
+
+feign:
+  sentinel:
+    enabled: true # 开启Feign对Sentinel的整合

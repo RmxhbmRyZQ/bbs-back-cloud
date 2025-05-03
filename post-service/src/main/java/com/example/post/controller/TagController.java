@@ -22,6 +22,7 @@ import com.example.post.service.TagService;
 import com.example.post.utils.PostBeanUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -109,6 +110,7 @@ public class TagController {
     }
 
     @PostMapping("/sys-ctrl/tag")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, TagDTO>> addTag(@RequestBody TagDTO tagDTO) {
         QueryWrapper<Tag> tagNameQueryWrapper = new QueryWrapper<>();
         tagNameQueryWrapper.eq("name", tagDTO.getName());
@@ -143,6 +145,7 @@ public class TagController {
     }
 
     @PutMapping("/sys-ctrl/tag")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<List<TagDTO>> updateTag(@RequestBody Tag tag) {
         boolean updated = tagService.update(tag, null);
         if (updated) {
@@ -152,6 +155,7 @@ public class TagController {
     }
 
     @DeleteMapping("/sys-ctrl/tag")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<List<TagDTO>> deleteTag(@RequestBody Tag tag) {
         QueryWrapper<Tag> tagQueryWrapper = new QueryWrapper<>();
         tagQueryWrapper.eq("label", tag.getLabel());
@@ -171,6 +175,7 @@ public class TagController {
     }
 
     @DeleteMapping("/sys-ctrl/tagForce")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<List<TagDTO>> forceDeleteTag(@RequestBody Tag tag) {
         QueryWrapper<Tag> tagQueryWrapper = new QueryWrapper<>();
         tagQueryWrapper.eq("label", tag.getLabel());
@@ -216,7 +221,8 @@ public class TagController {
     }
 
     @PostMapping("/sys-ctrl/tagOption")
-    public Response<Map<String, TagOption>> addTagOption(@RequestBody TagOption tagOption) {  // 这个操作不需要权限吗
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    public Response<Map<String, TagOption>> addTagOption(@RequestBody TagOption tagOption) {
         QueryWrapper<TagOption> tagOptionNameQueryWrapper = new QueryWrapper<>();
         tagOptionNameQueryWrapper.eq("name", tagOption.getName());
         boolean tagOptionNameExists = tagOptionService.exists(tagOptionNameQueryWrapper);
@@ -239,6 +245,7 @@ public class TagController {
     }
 
     @PutMapping("/sys-ctrl/tagOption")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, TagOption>> updateTagOption(@RequestBody TagOption tagOption) {
         boolean updated = tagOptionService.updateById(tagOption);
         if (updated) {
@@ -249,6 +256,7 @@ public class TagController {
     }
 
     @DeleteMapping("/sys-ctrl/tagOption")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<List<TagOptionDTO>> deleteTagOption(@RequestBody TagOption tagOption) {
         QueryWrapper<TagOption> tagOptionQueryWrapper = new QueryWrapper<>();
         tagOptionQueryWrapper.eq("label", tagOption.getLabel());
@@ -270,6 +278,7 @@ public class TagController {
     }
 
     @DeleteMapping("/sys-ctrl/tagOptionForce")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Object> forceDeleteTagOption(@RequestBody TagOption tagOption) {
         QueryWrapper<TagOption> tagOptionQueryWrapper = new QueryWrapper<>();
         tagOptionQueryWrapper.eq("label", tagOption.getLabel());

@@ -1,5 +1,6 @@
 package com.example.api.config;
 
+import com.example.api.client.fallback.UserClientFallback;
 import com.example.common.domain.bo.UserBO;
 import feign.Logger;
 import feign.RequestInterceptor;
@@ -24,5 +25,10 @@ public class DefaultFeignConfig {
 
             }
         };
+    }
+
+    @Bean
+    public UserClientFallback userClientFallback() {
+        return new UserClientFallback();
     }
 }

@@ -32,40 +32,60 @@ class BbsInitApplicationTests {
     private static final String BASE_PATH = "C:\\Users\\RmxhbmRyZQ\\Desktop\\find-work\\Java-project-study\\flip-master\\bbs-back\\";
 
     @Test
-    public void initConfig() throws NacosException, IOException {
-        // Nacos 服务器地址
-        String namespace = ""; // 可选，使用默认命名空间可留空
-
-        // 配置服务
+    public void initConfig() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("serverAddr", serverAddr);
-        properties.setProperty("namespace", namespace);
+        properties.setProperty("namespace", "");
         properties.setProperty("username", username);
         properties.setProperty("password", password);
 
         ConfigService configService = NacosFactory.createConfigService(properties);
 
-        // 文件路径（你的项目路径下的 config 文件夹）
-        String[] files = {
-                BASE_PATH + "config/mysql.yaml",
-                BASE_PATH + "config/security.yaml",
-                BASE_PATH + "config/elasticsearch.yaml",
-                BASE_PATH + "config/rabbitmq.yaml",
-                BASE_PATH + "config/seata.yaml",
-                BASE_PATH + "config/sentinel.yaml",
-                BASE_PATH + "config/openfeign.yaml",
-                BASE_PATH + "config/redis.yaml",
-        };
+        initNacos(configService);
+        initSentinel(configService);
+    }
 
-        for (String filePath : files) {
-            File file = new File(filePath);
-            String content = Files.readString(file.toPath());
+    /**
+     * 上传 config/nacos 下的配置文件至 DEFAULT_GROUP
+     */
+    private void initNacos(ConfigService configService) throws IOException, NacosException {
+        File configDir = new File(BASE_PATH + "config/nacos");
+        File[] files = configDir.listFiles();
 
-            String dataId = file.getName(); // 一般可用文件名当作 dataId
-            String group = "DEFAULT_GROUP"; // 你可以自定义 group
+        if (files == null) {
+            System.out.println("Nacos 配置文件目录不存在或为空");
+            return;
+        }
 
-            boolean isSuccess = configService.publishConfig(dataId, group, content, ConfigType.YAML.getType());
-            System.out.println("上传 " + dataId + ": " + (isSuccess ? "成功" : "失败"));
+        for (File file : files) {
+            if (file.isFile()) {
+                String dataId = file.getName();
+                String content = Files.readString(file.toPath());
+                boolean isSuccess = configService.publishConfig(dataId, "DEFAULT_GROUP", content, ConfigType.YAML.getType());
+                System.out.println("上传 NACOS: " + dataId + " -> " + (isSuccess ? "成功" : "失败"));
+            }
+        }
+    }
+
+    /**
+     * 上传 config/sentinel 下的配置文件至 SENTINEL_GROUP
+     */
+    private void initSentinel(ConfigService configService) throws IOException, NacosException {
+        File configDir = new File(BASE_PATH + "config/sentinel");
+        File[] files = configDir.listFiles();
+
+        if (files == null) {
+            System.out.println("Sentinel 配置文件目录不存在或为空");
+            return;
+        }
+
+        for (File file : files) {
+            if (file.isFile()) {
+                String dataId = file.getName();
+                String content = Files.readString(file.toPath());
+                boolean isSuccess = configService.publishConfig(dataId, "SENTINEL_GROUP", content, ConfigType.JSON.getType());
+                System.out.println("上传 SENTINEL: " + dataId + " -> " + (isSuccess ? "成功" : "失败"));
+            }
         }
     }
 }

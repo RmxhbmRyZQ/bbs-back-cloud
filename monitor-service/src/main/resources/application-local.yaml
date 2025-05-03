@@ -17,3 +17,8 @@ bbs:
   redis:
     host: 192.168.3.16
     pw: admin123
+
+  sentinel:
+    host: 192.168.3.16
+    port: 8090
+    tport: 7084

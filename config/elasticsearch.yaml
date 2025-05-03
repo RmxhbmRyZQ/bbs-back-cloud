@@ -1,4 +1,0 @@
-elasticsearch:
-  host: ${bbs.es.host:192.168.3.16}
-  port: ${bbs.es.port:9200}
-  scheme: http

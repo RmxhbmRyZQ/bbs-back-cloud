@@ -7,6 +7,7 @@ import com.example.common.utils.RedisKeyUtils;
 import com.example.monitor.config.SystemUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +25,7 @@ public class StatusController {
     private final PostClient postClient;
 
     @GetMapping("/systemInfo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Object> getSystemInfo() {
         Map<String, String> memory = SystemUtils.getMemory();
         Map<String, Object> processor = SystemUtils.getProcessor();
@@ -37,6 +39,7 @@ public class StatusController {
     }
 
     @GetMapping("/forumInfo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public Response<Map<String, Integer>> getForumInfo() {
         String userNumberKey = RedisKeyUtils.getUserNumberKey();
         String postNumberKey = RedisKeyUtils.getPostNumberKey();

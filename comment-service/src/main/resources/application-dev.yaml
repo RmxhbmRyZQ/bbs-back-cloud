@@ -17,3 +17,8 @@ bbs:
   redis:
     host: redis
     pw: admin123
+
+  sentinel:
+    host: sentinel-dashboard
+    port: 8090
+    tport: 7085

@@ -1,6 +1,0 @@
-spring:
-  data:
-    redis:
-      host: ${bbs.redis.host:192.168.3.16}
-      port: 6379
-      password: ${bbs.redisi.un:admin123}

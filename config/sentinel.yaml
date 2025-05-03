@@ -1,3 +1,0 @@
-feign:
-  sentinel:
-    enabled: true # 开启Feign对Sentinel的整合
