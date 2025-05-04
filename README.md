@@ -24,3 +24,12 @@ sudo docker compose up -d
 ```
 
 运行bbs-init中的测试方法，上传配置文件到nacos中
+
+接着就可以运行里面的微服务了，包括：
+
+- user-service
+- post-service
+- search-service
+- monitor-service
+- file-service
+- comment-service
